@@ -1,0 +1,761 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת מעקב בריאות וכושר</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .app-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-align: center;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+        }
+        
+        .app-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .app-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            min-height: 40px;
+        }
+        
+        .status-bar {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            color: white;
+        }
+        
+        .status-item {
+            text-align: center;
+        }
+        
+        .status-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .app-link {
+            display: inline-block;
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        .app-link:hover {
+            background: linear-gradient(45deg, #1976D2, #2196F3);
+            transform: scale(1.05);
+        }
+        
+        .section-header {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 40px 0 25px 0;
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .section-header:first-of-type {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 מערכת מעקב בריאות וכושר</h1>
+            <p>מערכת מקיפה למעקב אחר מדדי גוף, תזונה וכושר עם ניתוחים מתקדמים, טבלאות וסיכומים</p>
+            <button id="saveAllTablesBtn" style="margin-top: 20px; padding: 12px 24px; background: linear-gradient(45deg, #28a745, #20c997); color: white; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); transition: all 0.3s ease;">
+                💾 שמור את כל הטבלאות מכל הדפים ל-Google Sheets
+            </button>
+            <div id="saveAllProgress" style="display: none; margin-top: 15px; color: white; font-size: 14px;"></div>
+            <div id="saveAllResults" style="display: none; margin-top: 15px; background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 10px; max-width: 600px; margin-left: auto; margin-right: auto;"></div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">ממוצע חלבון (3 ימים)</div>
+                <div class="status-value" id="last3DaysProteinAvg">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">ממוצע קלוריות (3 ימים)</div>
+                <div class="status-value" id="last3DaysCalorieAvg">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">ממוצע משקל (3 ימים)</div>
+                <div class="status-value" id="lastDaysAvgWeight">--</div>
+            </div>
+        </div>
+        
+        <div class="status-bar" style="margin-top: 20px;">
+            <div class="status-item">
+                <div class="status-label">מקסימום קלוריות להיום יעד</div>
+                <div class="status-value" id="maxCaloriesTodayTarget">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">מקסימום קלוריות להיום TDEE</div>
+                <div class="status-value" id="maxCaloriesTodayTdee">--</div>
+            </div>
+        </div>
+        
+        <div class="status-bar" style="margin-top: 20px;">
+            <div class="status-item">
+                <div class="status-label">חלבון מינימלי</div>
+                <div class="status-value" id="maxProteinGap">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">שומן מקסימלי</div>
+                <div class="status-value" id="minFatGap">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">פחמימות נטו מקסימום</div>
+                <div class="status-value" id="minCarbsGap">--</div>
+            </div>
+        </div>
+        
+        <!-- Section 1: הזנה ומעקב -->
+        <div class="section-header">הזנה ומעקב</div>
+        <div class="apps-grid">
+            <!-- Body Metrics Tracker -->
+            <div class="app-card">
+                <div class="app-icon">⚖️</div>
+                <div class="app-title">הזנה ומעקב מדדי גוף</div>
+                <div class="app-description">מעקב אחר משקל, שריר, שומן ונוזלים עם ניתוחים וממוצעים</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Nutrition Tracker -->
+            <div class="app-card">
+                <div class="app-icon">🥗</div>
+                <div class="app-title">הזנה ומעקב תזונה וכושר</div>
+                <div class="app-description">מעקב אחר קלוריות, מקרו-נוטריינטים וצעדים עם השוואות למטרות</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/nutrition.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+        </div>
+        
+        <!-- Section 2: ניתוחים וסיכומים מרכזיים -->
+        <div class="section-header">ניתוחים וסיכומים מרכזיים</div>
+        <div class="apps-grid">
+            <!-- Weight Summary by Windows -->
+            <div class="app-card">
+                <div class="app-icon">📊</div>
+                <div class="app-title">סיכום משקל לפי חלונות</div>
+                <div class="app-description">סקירת התקדמות המשקל בכל חלונות הזמן עם כרטיסים וסיכומים</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-summary-by-windows.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Real Maintenance Calculator -->
+            <div class="app-card">
+                <div class="app-icon">🔬</div>
+                <div class="app-title">מחשבון תחזוקה עד היום</div>
+                <div class="app-description">חישוב קלוריות תחזוקה אמיתיות על בסיס שינויי משקל וצריכה</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/real-maintenance-calculator.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Targets vs Actual Nutrition with Window Selector -->
+            <div class="app-card">
+                <div class="app-icon">🎯</div>
+                <div class="app-title">יעדים מול בפועל - תזונה עם בחירת חלון</div>
+                <div class="app-description">השוואת יעדי תזונה מול צריכה בפועל עם בחירת חלון זמן ומילוי אוטומטי של יעדים לפי TDEE</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/targets-vs-actual-nutrition-with-window-selector.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Weight Summary TDEE Without Steps -->
+            <div class="app-card">
+                <div class="app-icon">📈</div>
+                <div class="app-title">סיכום משקל ותזונה - TDEE</div>
+                <div class="app-description">סיכום שינוי משקל, קלוריות, צעדים ו-TDEE עם טבלת סיכום Total Tdee ו-Net Tdee</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-summary-tdee-without-steps.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Maintenance Full Windows Table -->
+            <div class="app-card">
+                <div class="app-icon">📊</div>
+                <div class="app-title">טבלת תחזוקה - חלונות מלאים</div>
+                <div class="app-description">חישוב תחזוקה אמיתית לחלונות מלאים של 5, 7, 10, 14, 21 ו-28 ימים - עד 5 חלונות לכל גודל</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/maintenance-full-windows-table.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+        </div>
+        
+        <!-- Section 3: ניתוח גירעונות תזונתיים -->
+        <div class="section-header">ניתוח גירעונות תזונתיים</div>
+        <div class="apps-grid">
+            <!-- Calorie Deficit Analysis with Target Minus One Table -->
+            <div class="app-card">
+                <div class="app-icon">📉</div>
+                <div class="app-title">ניתוח גירעון קלורי - עם יעד (מינוס יום אחד) - טבלה</div>
+                <div class="app-description">השוואת נתונים בפועל (ללא היום האחרון) מול יעד קלורי לחלון זמן מלא עם בחירת חלון זמן ל-TDEE</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/calorie-deficit-analysis-with-target-minus-one-table.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Calorie Deficit Analysis with Target -->
+            <div class="app-card">
+                <div class="app-icon">📉</div>
+                <div class="app-title">ניתוח גירעון קלורי - מזון וצעדים עם יעד</div>
+                <div class="app-description">חישוב גירעון קלורי ממזון ומצעדים בחלונות זמן שונים עם יעד קלורי שבועי ובחירת חלון זמן ל-TDEE</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/calorie-deficit-analysis-with-target.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Macro Comparison Minus One Table -->
+            <div class="app-card">
+                <div class="app-icon">📊</div>
+                <div class="app-title">השוואת מקרונוטריינטים - טבלה</div>
+                <div class="app-description">השוואת מקרונוטריינטים בתצוגת טבלה (ללא היום האחרון) עם סיכום ובחירת חלון זמן ל-TDEE</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-comparison-minus-one-table.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+        </div>
+        
+        <!-- Section 4: ניתוח מדדים ומשקלים -->
+        <div class="section-header">ניתוח מדדים ומשקלים</div>
+        <div class="apps-grid">
+            <!-- Metrics Comparison with Window Selector -->
+            <div class="app-card">
+                <div class="app-icon">📊</div>
+                <div class="app-title">ניתוח מדדי גוף עם בחירת חלון</div>
+                <div class="app-description">השוואת תאריך נבחר לממוצע לפי חלון זמן נבחר (3-14 ימים) עם גרפים וצבעי סטטוס</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/metrics-comparison-with-window-selector.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Weight Analysis by Windows -->
+            <div class="app-card">
+                <div class="app-icon">📈</div>
+                <div class="app-title">ניתוח משקל לפי חלונות</div>
+                <div class="app-description">ניתוח מגמות משקל עם חלונות זמן לא חופפים לזיהוי דפוסים</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-analysis-by-windows.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Nutrition Windows Comparison -->
+            <div class="app-card">
+                <div class="app-icon">🍎</div>
+                <div class="app-title">השוואת תזונה לפי חלונות זמן</div>
+                <div class="app-description">השוואת קלוריות, שומן, פחמימות, חלבון ועוד בין חלונות זמן שונים (2-7 ימים) עם אינדיקטורי שינוי</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/nutrition-windows-comparison.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+        </div>
+        
+        <!-- Section 5: כלי ניתוח נוספים -->
+        <div class="section-header">כלי ניתוח נוספים</div>
+        <div class="apps-grid">
+            <!-- Maintenance History Table -->
+            <div class="app-card">
+                <div class="app-icon">📋</div>
+                <div class="app-title">טבלת היסטוריית תחזוקה עד היום</div>
+                <div class="app-description">טבלה של 5 חישובי תחזוקה אחרונים לכל חלון זמן עם ממוצעים</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/maintenance-history-table.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Macro Calculator -->
+            <div class="app-card">
+                <div class="app-icon">🥗</div>
+                <div class="app-title">מחשבון מקרונוטריינטים</div>
+                <div class="app-description">חישוב חלבון, פחמימות ושומן עבור TDEE ויעד קלורי</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-calculator.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Calorie Deficit Analysis with TDEE from Weight -->
+            <div class="app-card">
+                <div class="app-icon">📉</div>
+                <div class="app-title">ניתוח גירעון קלורי עם TDEE מחישוב משקל</div>
+                <div class="app-description">ניתוח גירעון קלורי עם TDEE מחושב אוטומטית מנתוני המשקל והתזונה (מינוס יום אחד)</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/calorie-deficit-analysis-with-tdee-from-weight.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Combined Macro and Calorie Gaps with TDEE -->
+            <div class="app-card">
+                <div class="app-icon">📊</div>
+                <div class="app-title">סיכום פערים - מקרונוטריינטים וקלוריות</div>
+                <div class="app-description">סיכום פערים מול יעד למקרונוטריינטים ופערים מול יעד ו-TDEE לקלוריות</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/combined-macro-calorie-gaps-with-tdee.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Combined Macro and Calorie Gaps Future Preview -->
+            <div class="app-card">
+                <div class="app-icon">🔮</div>
+                <div class="app-title">תצוגה מקדימה - סיכום פערים מחר</div>
+                <div class="app-description">הזן ערכים היפותטיים להיום וצפה איך הפערים ייראו מחר עם השוואה לפני ואחרי</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/combined-macro-calorie-gaps-future-preview.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Required Consumption Last Day -->
+            <div class="app-card">
+                <div class="app-icon">📋</div>
+                <div class="app-title">צריכה נדרשת ביום האחרון</div>
+                <div class="app-description">חישוב הצריכה הנדרשת ביום האחרון של כל חלון זמן לאיזון היעדים</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/required-consumption-last-day.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+            
+            <!-- Export All Data to Excel -->
+            <div class="app-card">
+                <div class="app-icon">📥</div>
+                <div class="app-title">ייצוא כל הנתונים ל-Excel</div>
+                <div class="app-description">ייצוא מקיף של כל הנתונים, טבלאות, כרטיסים ומספרים מכל הדפים לקובץ Excel אחד</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/export-all-data-to-excel.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+        </div>
+        
+        <!-- Section 6: OLD TOOLS -->
+        <div class="section-header">OLD TOOLS</div>
+        <div class="apps-grid">
+            <!-- Macro Comparison with TDEE from Weight -->
+            <div class="app-card">
+                <div class="app-icon">🥗</div>
+                <div class="app-title">השוואת מקרונוטריינטים עם TDEE מחישוב משקל</div>
+                <div class="app-description">השוואת מקרונוטריינטים עם TDEE מחושב אוטומטית מנתוני המשקל והתזונה</div>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-comparison-with-tdee-from-weight.html" class="app-link" target="_blank">🌐 פתח</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
+        
+        // Default TDEE and weekly deficit target (same as calorie-deficit-analysis-with-target-minus-one-table.html)
+        const TDEE = 2400;
+        const WEEKLY_DEFICIT_TARGET = 1050;
+        const WINDOWS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+        
+        // Default values for macro calculator (same as macro-comparison-minus-one-table.html)
+        const CALORIE_TARGET = 2250;
+        const PROTEIN_GRAMS = 160;
+        const FAT_PERCENT = 25;
+        
+        // Calculate target gap for a specific window (same logic as calorie-deficit-analysis-with-target-minus-one-table.html)
+        function calculateWindowGap(nutritionData, windowDays) {
+            // Check if first row is header
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            // Need at least: (windowDays - 1) data rows, plus 1 if header exists
+            const minRequired = hasHeader ? windowDays : windowDays - 1;
+            if (!nutritionData || nutritionData.length < minRequired) {
+                return null;
+            }
+            
+            // If header exists, skip it (start from index 1), otherwise start from index 0
+            // Take the first (windowDays - 1) days from the data
+            const startIndex = hasHeader ? 1 : 0;
+            const actualData = nutritionData.slice(startIndex, startIndex + (windowDays - 1));
+            
+            let totalCalories = 0;
+            let validDays = 0;
+            
+            actualData.forEach(row => {
+                if (row && row.length >= 7) {
+                    const calories = parseFloat(row[1]) || 0;
+                    totalCalories += calories;
+                    validDays++;
+                }
+            });
+            
+            if (validDays === 0) {
+                return null;
+            }
+            
+            // Calculate TDEE for the full window
+            const windowTDEE = TDEE * windowDays;
+            
+            // Calculate calorie target for the full window
+            const windowDeficitTarget = (WEEKLY_DEFICIT_TARGET / 7) * windowDays;
+            const calorieTarget = windowTDEE - windowDeficitTarget;
+            
+            // Calculate gaps: Target - Actual
+            const calorieTargetGap = calorieTarget - totalCalories;
+            const tdeeGap = windowTDEE - totalCalories;
+            
+            return {
+                calorieTargetGap: calorieTargetGap,
+                tdeeGap: tdeeGap
+            };
+        }
+        
+        // Calculate macros for given calories (same logic as macro-comparison-minus-one-table.html)
+        function calculateMacrosForCalories(totalCalories) {
+            // Protein: fixed amount (160g)
+            const proteinGrams = PROTEIN_GRAMS;
+            const proteinCalories = proteinGrams * 4;
+            
+            // Fat: percentage of total calories (25%)
+            const fatCalories = totalCalories * (FAT_PERCENT / 100);
+            const fatGrams = fatCalories / 9;
+            
+            // Carbs: rest of the calories
+            const carbsCalories = totalCalories - proteinCalories - fatCalories;
+            const carbsGrams = carbsCalories / 4;
+            
+            return {
+                protein: proteinGrams,
+                fat: fatGrams,
+                carbs: carbsGrams
+            };
+        }
+        
+        // Calculate window actuals for macros (same logic as macro-comparison-minus-one-table.html)
+        function calculateWindowActuals(nutritionData, windowDays) {
+            // Check if first row is header
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            // Need at least: (windowDays - 1) data rows, plus 1 if header exists
+            const minRequired = hasHeader ? windowDays : windowDays - 1;
+            if (!nutritionData || nutritionData.length < minRequired) {
+                return null;
+            }
+            
+            // Take the first (windowDays - 1) days from the data
+            const startIndex = hasHeader ? 1 : 0;
+            const actualData = nutritionData.slice(startIndex, startIndex + (windowDays - 1));
+            
+            let totalProtein = 0;
+            let totalFat = 0;
+            let totalNetCarbs = 0;
+            let validDays = 0;
+            
+            actualData.forEach(row => {
+                if (row && row.length >= 7) {
+                    const calories = parseFloat(row[1]) || 0;
+                    const fat = parseFloat(row[2]) || 0;
+                    const carbs = parseFloat(row[3]) || 0;
+                    const protein = parseFloat(row[4]) || 0;
+                    const fiber = parseFloat(row[5]) || 0;
+                    const netCarbs = carbs - fiber;
+                    
+                    if (calories > 0) {
+                        totalProtein += protein;
+                        totalFat += fat;
+                        totalNetCarbs += netCarbs;
+                        validDays++;
+                    }
+                }
+            });
+            
+            if (validDays === 0) {
+                return null;
+            }
+            
+            return {
+                totalProtein: totalProtein,
+                totalFat: totalFat,
+                totalNetCarbs: totalNetCarbs
+            };
+        }
+        
+        // Load and display statistics
+        async function loadStatistics() {
+            try {
+                // Load nutrition data
+                const nutritionResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=getNutrition`);
+                const nutritionDataResponse = await nutritionResponse.json();
+                
+                if (nutritionDataResponse.success && nutritionDataResponse.data) {
+                    const nutritionData = nutritionDataResponse.data;
+                    
+                    // Check if first row is header
+                    const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                                     (typeof nutritionData[0][0] === 'string') && 
+                                     (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+                    
+                    // Calculate last 3 days calorie average
+                    const dataStartIndex = hasHeader ? 1 : 0;
+                    const last3Days = nutritionData.slice(dataStartIndex, dataStartIndex + 3);
+                    
+                    if (last3Days.length >= 3) {
+                        const calorieSum = last3Days.reduce((sum, row) => sum + (parseFloat(row[1]) || 0), 0);
+                        const calorieAvg = Math.round(calorieSum / 3);
+                        document.getElementById('last3DaysCalorieAvg').textContent = calorieAvg;
+                        
+                        // Calculate last 3 days protein average (protein is at index 4)
+                        const proteinSum = last3Days.reduce((sum, row) => sum + (parseFloat(row[4]) || 0), 0);
+                        const proteinAvg = (proteinSum / 3).toFixed(1);
+                        document.getElementById('last3DaysProteinAvg').textContent = proteinAvg + ' גרם';
+                    }
+                    
+                    // Calculate maximum calories for today based on minimum gaps across all windows
+                    const allCalorieTargetGaps = [];
+                    const allTdeeGaps = [];
+                    
+                    WINDOWS.forEach(windowDays => {
+                        const gapData = calculateWindowGap(nutritionData, windowDays);
+                        if (gapData) {
+                            allCalorieTargetGaps.push(gapData.calorieTargetGap);
+                            allTdeeGaps.push(gapData.tdeeGap);
+                        }
+                    });
+                    
+                    if (allCalorieTargetGaps.length > 0) {
+                        const minCalorieTargetGap = Math.min(...allCalorieTargetGaps);
+                        const minTdeeGap = Math.min(...allTdeeGaps);
+                        document.getElementById('maxCaloriesTodayTarget').textContent = minCalorieTargetGap.toFixed(0);
+                        document.getElementById('maxCaloriesTodayTdee').textContent = minTdeeGap.toFixed(0);
+                    } else {
+                        document.getElementById('maxCaloriesTodayTarget').textContent = '--';
+                        document.getElementById('maxCaloriesTodayTdee').textContent = '--';
+                    }
+                    
+                    // Calculate macro gaps across all windows
+                    const targetMacros = calculateMacrosForCalories(CALORIE_TARGET);
+                    const allProteinGaps = [];
+                    const allFatGaps = [];
+                    const allCarbsGaps = [];
+                    
+                    WINDOWS.forEach(windowDays => {
+                        const actuals = calculateWindowActuals(nutritionData, windowDays);
+                        
+                        if (actuals) {
+                            // Calculate cumulative target for window days
+                            const cumulativeTargetProtein = targetMacros.protein * windowDays;
+                            const cumulativeTargetFat = targetMacros.fat * windowDays;
+                            const cumulativeTargetCarbs = targetMacros.carbs * windowDays;
+                            
+                            // Calculate gaps: Cumulative Target - Cumulative Actual
+                            const proteinGap = cumulativeTargetProtein - actuals.totalProtein;
+                            const fatGap = cumulativeTargetFat - actuals.totalFat;
+                            const carbsGap = cumulativeTargetCarbs - actuals.totalNetCarbs;
+                            
+                            allProteinGaps.push(proteinGap);
+                            allFatGaps.push(fatGap);
+                            allCarbsGaps.push(carbsGap);
+                        }
+                    });
+                    
+                    if (allProteinGaps.length > 0) {
+                        // Find max protein gap (biggest) and min fat/carbs gaps (lowest)
+                        const maxProteinGap = Math.max(...allProteinGaps);
+                        const minFatGap = Math.min(...allFatGaps);
+                        const minCarbsGap = Math.min(...allCarbsGaps);
+                        
+                        document.getElementById('maxProteinGap').textContent = maxProteinGap.toFixed(0);
+                        document.getElementById('minFatGap').textContent = minFatGap.toFixed(0);
+                        document.getElementById('minCarbsGap').textContent = minCarbsGap.toFixed(0);
+                    } else {
+                        document.getElementById('maxProteinGap').textContent = '--';
+                        document.getElementById('minFatGap').textContent = '--';
+                        document.getElementById('minCarbsGap').textContent = '--';
+                    }
+                }
+                
+                // Load body metrics data for weight average
+                const bodyMetricsResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=get`);
+                const bodyMetricsData = await bodyMetricsResponse.json();
+                
+                if (bodyMetricsData.success && bodyMetricsData.data && bodyMetricsData.data.length >= 3) {
+                    // Calculate last 3 days weight average from גיליון1, column משקל (ק״ג) which is index 1
+                    const last3Days = bodyMetricsData.data.slice(0, 3);
+                    const weightSum = last3Days.reduce((sum, row) => sum + (parseFloat(row[1]) || 0), 0);
+                    const weightAvg = (weightSum / 3).toFixed(2);
+                    document.getElementById('lastDaysAvgWeight').textContent = weightAvg + ' ק"ג';
+                }
+                
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                // Keep the default "--" values if there's an error
+            }
+        }
+        
+        // Load statistics when page loads
+        document.addEventListener('DOMContentLoaded', loadStatistics);
+        
+        // Save all tables from all pages
+        document.getElementById('saveAllTablesBtn').addEventListener('click', async function() {
+            const button = this;
+            const progressDiv = document.getElementById('saveAllProgress');
+            const resultsDiv = document.getElementById('saveAllResults');
+            
+            // Disable button and show progress
+            button.disabled = true;
+            button.textContent = '⏳ שומר...';
+            progressDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            progressDiv.textContent = 'אוסף קישורים מהדף...';
+            
+            try {
+                // Collect all links from app cards
+                const appLinks = document.querySelectorAll('.app-link');
+                const urls = [];
+                
+                appLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && href.includes('liornim.github.io/body-metrics-tracker/')) {
+                        // Only include HTML files, exclude the main page
+                        if (href.endsWith('.html') || href.includes('.html')) {
+                            urls.push(href);
+                        }
+                    }
+                });
+                
+                if (urls.length === 0) {
+                    throw new Error('לא נמצאו קישורים לשמירה');
+                }
+                
+                progressDiv.textContent = `מצא ${urls.length} דפים. מתחיל לשמור...`;
+                
+                // Send to Google Apps Script
+                const payload = {
+                    action: 'saveAllTables',
+                    urls: urls,
+                    baseSheetName: 'AllTables',
+                    includeTimestamp: true
+                };
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    progressDiv.textContent = '✓ הושלם בהצלחה!';
+                    progressDiv.style.color = '#90EE90';
+                    
+                    // Show results
+                    let resultsHtml = '<h3 style="margin-bottom: 10px; color: #28a745;">✓ שמירה הושלמה בהצלחה!</h3>';
+                    resultsHtml += `<p><strong>סה"כ דפים:</strong> ${result.totalUrls}</p>`;
+                    resultsHtml += `<p><strong>תאריך:</strong> ${result.timestamp}</p>`;
+                    resultsHtml += '<hr style="margin: 10px 0;">';
+                    resultsHtml += '<h4>תוצאות:</h4><ul style="text-align: right; max-height: 300px; overflow-y: auto;">';
+                    
+                    let successCount = 0;
+                    let failCount = 0;
+                    
+                    result.results.forEach((item, index) => {
+                        if (item.success) {
+                            successCount++;
+                            resultsHtml += `<li style="color: #28a745; margin: 5px 0;">✓ ${item.pageName || 'דף ' + (index + 1)}: ${item.rows || 0} שורות, ${item.cols || 0} עמודות → ${item.sheetName}</li>`;
+                        } else {
+                            failCount++;
+                            resultsHtml += `<li style="color: #dc3545; margin: 5px 0;">✗ ${item.pageName || 'דף ' + (index + 1)}: ${item.error || 'שגיאה'}</li>`;
+                        }
+                    });
+                    
+                    resultsHtml += '</ul>';
+                    resultsHtml += `<p style="margin-top: 10px;"><strong>הצלחו:</strong> ${successCount} | <strong>נכשלו:</strong> ${failCount}</p>`;
+                    
+                    resultsDiv.innerHTML = resultsHtml;
+                    resultsDiv.style.display = 'block';
+                    
+                    button.textContent = '✓ נשמר בהצלחה!';
+                    button.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+                    
+                    setTimeout(() => {
+                        button.textContent = '💾 שמור את כל הטבלאות מכל הדפים ל-Google Sheets';
+                        button.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+                        button.disabled = false;
+                    }, 5000);
+                    
+                } else {
+                    throw new Error(result.error || 'שגיאה בשמירה');
+                }
+                
+            } catch (error) {
+                console.error('Error saving all tables:', error);
+                progressDiv.textContent = '✗ שגיאה: ' + error.message;
+                progressDiv.style.color = '#ff6b6b';
+                
+                resultsDiv.innerHTML = `<h3 style="color: #dc3545;">✗ שגיאה בשמירה</h3><p>${error.message}</p>`;
+                resultsDiv.style.display = 'block';
+                
+                button.textContent = '✗ שגיאה - נסה שוב';
+                button.style.background = 'linear-gradient(45deg, #dc3545, #c82333)';
+                
+                setTimeout(() => {
+                    button.textContent = '💾 שמור את כל הטבלאות מכל הדפים ל-Google Sheets';
+                    button.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+                    button.disabled = false;
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
