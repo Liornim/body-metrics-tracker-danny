@@ -1,0 +1,1303 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יעדים מול בפועל - תזונה עם בחירת חלון</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .targets-config {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .targets-config h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .window-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .window-info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .window-info p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .targets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .target-input {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .target-input label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .target-input input,
+        .target-input select {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .target-input input:focus,
+        .target-input select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .secondary-button {
+            background: #95a5a6;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 50px 0;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .windows-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .window-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .window-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: -20px -20px 20px -20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .metric-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .metric-actual {
+            text-align: center;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .metric-target {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .metric-diff {
+            text-align: center;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .metric-diff.positive {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .metric-diff.negative {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .metric-diff.neutral {
+            background: #f5f5f5;
+            color: #666;
+        }
+        
+        .metric-header {
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .summary-stats {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .summary-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: -25px -25px 20px -25px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .summary-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            color: #2c3e50;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .summary-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .gap-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .gap-value.positive {
+            color: #c62828;
+        }
+        
+        .gap-value.negative {
+            color: #2e7d32;
+        }
+        
+        .weight-loss-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .weight-loss-value.positive {
+            color: #2e7d32;
+        }
+        
+        .weight-loss-value.negative {
+            color: #c62828;
+        }
+        
+        @media (max-width: 768px) {
+            .windows-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .metric-row {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 5px;
+            }
+            
+            .metric-actual,
+            .metric-target,
+            .metric-diff {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 יעדים מול בפועל - תזונה עם בחירת חלון</h1>
+            <p>השוואת יעדי תזונה מול צריכה בפועל בחלונות זמן שונים - בחר חלון כדי למלא ערכי ברירת מחדל</p>
+        </div>
+        
+        <!-- Targets Configuration -->
+        <div class="targets-config">
+            <h2>⚙️ הגדרת יעדים</h2>
+            <div class="window-info">
+                <h3>ℹ️ בחירת חלון זמן</h3>
+                <p>בחר חלון זמן מהתפריט כדי למלא אוטומטית את ערכי ברירת המחדל. הערכים מחושבים לפי TDEE של אותו חלון (מחושב מנתוני המשקל והתזונה), גירעון שבועי בגרמים, חלבון של 190 גרם, ושומן של 25% מה-TDEE. הקלוריות מחושבות כ-TDEE פחות הגירעון היומי (גרמים), והפחמימות מחושבות מהקלוריות שנותרו אחרי חלבון ושומן.</p>
+            </div>
+            <div class="targets-grid">
+                <div class="target-input">
+                    <label>📅 בחר חלון זמן לערכי ברירת מחדל</label>
+                    <select id="windowSelect" onchange="fillDefaultsFromWindow()">
+                        <option value="">טוען...</option>
+                    </select>
+                </div>
+                <div class="target-input">
+                    <label>⚖️ גירעון שבועי בגרמים</label>
+                    <input type="number" id="gramsDeficit" value="0" min="0" step="10" placeholder="לדוגמה: 150">
+                </div>
+                <div class="target-input">
+                    <label>💪 חלבון (גרם)</label>
+                    <input type="number" id="proteinValue" value="190" min="0" step="5">
+                </div>
+                <div class="target-input">
+                    <label>🎯 יעד קלוריות</label>
+                    <input type="number" id="calorieTarget" value="2400" min="0" step="10">
+                </div>
+                <div class="target-input">
+                    <label>⚡ קלוריות בניכוי צעדים</label>
+                    <input type="number" id="netCaloriesTarget" value="2000" min="0" step="10">
+                </div>
+                <div class="target-input">
+                    <label>💪 חלבון יעד (גרם)</label>
+                    <input type="number" id="proteinTarget" value="190" min="0" step="1">
+                </div>
+                <div class="target-input">
+                    <label>🥑 שומן יעד (גרם)</label>
+                    <input type="number" id="fatTarget" value="67" min="0" step="1">
+                </div>
+                <div class="target-input">
+                    <label>🍞 פחמימות יעד (גרם)</label>
+                    <input type="number" id="carbsTarget" value="259" min="0" step="1">
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button onclick="updateTargets()">עדכן יעדים</button>
+                <button onclick="loadData()" class="secondary-button">טען נתונים</button>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            🔄 טוען נתונים...
+        </div>
+        
+        <div id="error" class="error" style="display: none;">
+            ❌ שגיאה בטעינת הנתונים.
+            <button onclick="loadData()" style="margin-left: 10px; padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                נסה שוב
+            </button>
+        </div>
+        
+        <div id="summaryStats" class="summary-stats" style="display: none;"></div>
+        
+        <div id="content" style="display: none;">
+            <div style="margin-bottom: 15px; text-align: left;">
+                <button onclick="exportToExcel()" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    📥 ייצא ל-Excel
+                </button>
+            </div>
+            <div id="windowsSection" class="windows-section"></div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
+        
+        // Default targets
+        let TARGETS = {
+            calories: 2400,
+            netCalories: 2000,
+            protein: 190,
+            fat: 67,
+            carbs: 259,
+            steps: 10000
+        };
+        
+        let nutritionData = [];
+        let weightData = [];
+        let windowTdeeMap = {};
+        
+        const WINDOWS = [3, 5, 7, 9, 10, 11, 12, 13, 14, 21, 28];
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+        
+        // TDEE calculation functions (same as combined-macro-calorie-gaps-with-tdee.html)
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+            return new Date(dateStr);
+        }
+        
+        function subtractOneDay(dateStr) {
+            if (!dateStr) return null;
+            const date = parseDate(dateStr);
+            if (!date || isNaN(date.getTime())) return null;
+            date.setDate(date.getDate() - 1);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        function sortDataAsc(data) {
+            return [...data].sort((a, b) => {
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                if (!dateA || !dateB) return 0;
+                return dateA - dateB;
+            });
+        }
+        
+        function createChunks(data, windowSize) {
+            const chunks = [];
+            for (let i = 0; i < data.length; i += windowSize) {
+                chunks.push(data.slice(i, i + windowSize));
+            }
+            return chunks;
+        }
+        
+        function calculateMean(values) {
+            if (values.length === 0) return 0;
+            const validValues = values.filter(v => v !== null && v !== undefined && !isNaN(v));
+            if (validValues.length === 0) return 0;
+            return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+        }
+        
+        function processWindowAnalysis(data, windowSize) {
+            const sortedData = sortDataAsc(data);
+            const chunks = createChunks(sortedData, windowSize);
+            
+            const results = [];
+            
+            chunks.forEach((chunk, index) => {
+                if (chunk.length === 0) return;
+                if (chunk.length !== windowSize) return;
+                
+                const weights = chunk.map(item => item.weight);
+                const average = calculateMean(weights);
+                
+                const result = {
+                    window: windowSize,
+                    average: average,
+                    delta: null,
+                    daysCount: chunk.length,
+                    startDate: chunk[0].date,
+                    endDate: chunk[chunk.length - 1].date
+                };
+                
+                if (index > 0) {
+                    for (let prevIndex = index - 1; prevIndex >= 0; prevIndex--) {
+                        if (chunks[prevIndex].length === windowSize) {
+                            const prevWeights = chunks[prevIndex].map(item => item.weight);
+                            const prevAverage = calculateMean(prevWeights);
+                            result.delta = average - prevAverage;
+                            break;
+                        }
+                    }
+                }
+                
+                results.push(result);
+            });
+            
+            return results;
+        }
+        
+        function getNutritionForWindow(nutritionData, startDate, endDate) {
+            const caloriesStartDate = subtractOneDay(startDate);
+            const caloriesEndDate = subtractOneDay(endDate);
+            
+            if (!caloriesStartDate || !caloriesEndDate) {
+                return { avgCalories: 0, totalCalories: 0, avgSteps: 0 };
+            }
+            
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            const dataStartIndex = hasHeader ? 1 : 0;
+            const calories = [];
+            const steps = [];
+            
+            for (let i = dataStartIndex; i < nutritionData.length; i++) {
+                const row = nutritionData[i];
+                if (!row || row.length === 0) continue;
+                
+                const rowDate = row[0];
+                if (!rowDate) continue;
+                
+                const date = parseDate(rowDate);
+                const start = parseDate(caloriesStartDate);
+                const end = parseDate(caloriesEndDate);
+                
+                if (!date || !start || !end) continue;
+                
+                const isInRange = (date >= start && date <= end) || (date >= end && date <= start);
+                
+                if (isInRange) {
+                    const cal = parseFloat(row[1]) || 0;
+                    const step = parseFloat(row[6]) || 0;
+                    
+                    if (cal > 0) calories.push(cal);
+                    if (step > 0) steps.push(step);
+                }
+            }
+            
+            const avgCalories = calculateMean(calories);
+            const totalCalories = calories.reduce((sum, cal) => sum + cal, 0);
+            const avgSteps = calculateMean(steps);
+            
+            return { avgCalories, totalCalories, avgSteps };
+        }
+        
+        function calculateTDEE(delta) {
+            if (delta === null || delta === undefined) return 0;
+            const deltaRounded = Math.round(Math.abs(delta) * 100) / 100;
+            return delta >= 0 ? -(deltaRounded * 7700) : (deltaRounded * 7700);
+        }
+        
+        function calculateNetTDEE(windowSize, weightData, nutritionData) {
+            const results = processWindowAnalysis(weightData, windowSize);
+            const lastThreeFullWindows = results.filter(r => r.daysCount === windowSize);
+            
+            if (lastThreeFullWindows.length === 0) return null;
+            
+            const lastWindow = lastThreeFullWindows[lastThreeFullWindows.length - 1];
+            const delta = lastWindow.delta;
+            
+            if (delta === null || delta === undefined) return null;
+            
+            const nutrition = getNutritionForWindow(nutritionData, lastWindow.startDate, lastWindow.endDate);
+            const tdee = calculateTDEE(delta);
+            const avgTdeePerDay = windowSize > 0 ? tdee / windowSize : 0;
+            const caloriesFromSteps = nutrition.avgSteps / 25;
+            const netTdee = Math.round(nutrition.avgCalories) + Math.round(avgTdeePerDay) - Math.round(caloriesFromSteps);
+            
+            return netTdee;
+        }
+        
+        // Populate window dropdown
+        function populateWindowDropdown() {
+            const select = document.getElementById('windowSelect');
+            select.innerHTML = '<option value="">בחר חלון...</option>';
+            
+            // Show all windows from WINDOWS array, not just those with calculated TDEE
+            const sortedWindows = [...WINDOWS].sort((a, b) => a - b);
+            
+            sortedWindows.forEach(windowSize => {
+                const tdee = windowTdeeMap[windowSize];
+                const option = document.createElement('option');
+                option.value = windowSize;
+                if (tdee !== undefined && tdee !== null) {
+                    option.textContent = `${windowSize} ימים - TDEE: ${tdee}`;
+                } else {
+                    option.textContent = `${windowSize} ימים - אין נתונים מספיקים`;
+                }
+                select.appendChild(option);
+            });
+            
+            // Set default to 28 days if available, otherwise 14, otherwise first available
+            if (windowTdeeMap[28] !== undefined) {
+                select.value = '28';
+                fillDefaultsFromWindow();
+            } else if (windowTdeeMap[14] !== undefined) {
+                select.value = '14';
+                fillDefaultsFromWindow();
+            } else if (sortedWindows.length > 0) {
+                // If 28 and 14 are not available, use the first available window with TDEE
+                const firstAvailableWindow = sortedWindows.find(w => windowTdeeMap[w] !== undefined);
+                if (firstAvailableWindow) {
+                    select.value = firstAvailableWindow.toString();
+                    fillDefaultsFromWindow();
+                }
+            }
+        }
+        
+        // Calculate macros from calories
+        function calculateMacrosForCalories(calories, proteinGrams, fatPercent) {
+            const proteinCalories = proteinGrams * 4;
+            const fatCalories = calories * (fatPercent / 100);
+            const fatGrams = fatCalories / 9;
+            const carbCalories = calories - proteinCalories - fatCalories;
+            const carbGrams = carbCalories / 4;
+            
+            return { protein: proteinGrams, fat: fatGrams, carbs: carbGrams };
+        }
+        
+        // Fill defaults from selected window
+        function fillDefaultsFromWindow() {
+            const selectedWindow = parseInt(document.getElementById('windowSelect').value);
+            if (!selectedWindow || !windowTdeeMap[selectedWindow]) {
+                return;
+            }
+            
+            const selectedTdee = windowTdeeMap[selectedWindow];
+            const gramsDeficit = parseFloat(document.getElementById('gramsDeficit').value) || 0;
+            const proteinGrams = parseFloat(document.getElementById('proteinValue').value) || 190;
+            
+            // Calculate daily deficit from grams: weekly calorie deficit = grams * 7, daily = grams
+            const dailyDeficit = gramsDeficit;
+            
+            // יעד קלוריות = TDEE - daily deficit
+            const calorieTarget = selectedTdee - dailyDeficit;
+            
+            // Fat = 25% of TDEE (not calorie target)
+            const fatCalories = selectedTdee * 0.25;
+            const fatGrams = fatCalories / 9;
+            
+            // Protein = 190g (fixed)
+            const proteinCalories = proteinGrams * 4;
+            
+            // Carbs = remaining calories (from calorie target, not TDEE)
+            const remainingCalories = calorieTarget - proteinCalories - fatCalories;
+            const carbsGrams = remainingCalories / 4;
+            
+            // Fill the input fields
+            document.getElementById('calorieTarget').value = Math.round(calorieTarget);
+            document.getElementById('netCaloriesTarget').value = Math.round(selectedTdee);
+            document.getElementById('proteinTarget').value = Math.round(proteinGrams);
+            document.getElementById('fatTarget').value = Math.round(fatGrams);
+            document.getElementById('carbsTarget').value = Math.round(carbsGrams);
+            
+            // Update targets
+            updateTargets();
+        }
+        
+        // Update targets from form inputs
+        function updateTargets() {
+            TARGETS = {
+                calories: parseInt(document.getElementById('calorieTarget').value) || 2400,
+                netCalories: parseInt(document.getElementById('netCaloriesTarget').value) || 2000,
+                protein: parseInt(document.getElementById('proteinTarget').value) || 190,
+                fat: parseInt(document.getElementById('fatTarget').value) || 67,
+                carbs: parseInt(document.getElementById('carbsTarget').value) || 259,
+                steps: 0 // Not used anymore
+            };
+            
+            console.log('Targets updated:', TARGETS);
+            
+            // Reload data with new targets
+            if (nutritionData.length > 0) {
+                displayData();
+            } else {
+                loadData();
+            }
+        }
+        
+        // Load nutrition data from Google Sheets
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const content = document.getElementById('content');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            content.style.display = 'none';
+            
+            try {
+                // Load weight data
+                const weightResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=get`);
+                const weightDataResponse = await weightResponse.json();
+                
+                // Load nutrition data
+                const nutritionResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=getNutrition`);
+                const nutritionDataResponse = await nutritionResponse.json();
+                
+                if (!weightDataResponse.success || !weightDataResponse.data || weightDataResponse.data.length === 0) {
+                    throw new Error('לא נמצאו נתוני משקל');
+                }
+                
+                if (!nutritionDataResponse.success || !nutritionDataResponse.data) {
+                    throw new Error('לא נמצאו נתוני תזונה');
+                }
+                
+                // Process weight data
+                const hasHeader = weightDataResponse.data[0] && weightDataResponse.data[0][0] && 
+                                 (typeof weightDataResponse.data[0][0] === 'string') && 
+                                 (weightDataResponse.data[0][0].includes('תאריך') || weightDataResponse.data[0][0].includes('Date') || 
+                                  weightDataResponse.data[0][0].includes('משקל') || weightDataResponse.data[0][0].includes('Weight'));
+                
+                const startIndex = hasHeader ? 1 : 0;
+                const rawWeightData = weightDataResponse.data.slice(startIndex).reverse();
+                
+                weightData = rawWeightData.map(row => ({
+                    date: row[0],
+                    weight: parseFloat(row[1])
+                })).filter(item => item.weight > 0 && item.date);
+                
+                nutritionData = nutritionDataResponse.data;
+                
+                // Calculate TDEE for each window
+                windowTdeeMap = {};
+                WINDOWS.forEach(windowSize => {
+                    const netTdee = calculateNetTDEE(windowSize, weightData, nutritionData);
+                    if (netTdee !== null) {
+                        windowTdeeMap[windowSize] = netTdee;
+                    }
+                });
+                
+                // Populate window dropdown
+                populateWindowDropdown();
+                
+                displayData();
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (error) {
+                console.error('Error loading data:', error);
+                loading.style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+        
+        // Calculate totals for a specific window
+        function calculateWindowTotal(windowDays) {
+            if (!nutritionData || nutritionData.length === 0) {
+                return null;
+            }
+            
+            // Check if first row is header
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            const minRequired = hasHeader ? windowDays + 1 : windowDays;
+            if (nutritionData.length < minRequired) {
+                return null;
+            }
+            
+            const startIndex = hasHeader ? 1 : 0;
+            const windowData = nutritionData.slice(startIndex, startIndex + windowDays);
+            
+            let totals = {
+                calories: 0,
+                netCalories: 0,
+                protein: 0,
+                fat: 0,
+                carbs: 0,
+                steps: 0
+            };
+            
+            let validDays = 0;
+            
+            windowData.forEach(row => {
+                if (row && row.length >= 7) {
+                    const calories = parseFloat(row[1]) || 0;
+                    const fat = parseFloat(row[2]) || 0;
+                    const carbs = parseFloat(row[3]) || 0;
+                    const protein = parseFloat(row[4]) || 0;
+                    const steps = parseFloat(row[6]) || 0;
+                    
+                    // Calculate net calories: calories - (steps / 25)
+                    const netCalories = calories - (steps / 25);
+                    
+                    totals.calories += calories;
+                    totals.netCalories += netCalories;
+                    totals.protein += protein;
+                    totals.fat += fat;
+                    totals.carbs += carbs;
+                    totals.steps += steps;
+                    validDays++;
+                }
+            });
+            
+            if (validDays === 0) {
+                return null;
+            }
+            
+            return {
+                calories: totals.calories,
+                netCalories: totals.netCalories,
+                protein: totals.protein,
+                fat: totals.fat,
+                carbs: totals.carbs,
+                steps: totals.steps
+            };
+        }
+        
+        // Format difference with sign and color
+        function formatDifference(actual, target, metricType = 'default') {
+            let diff = actual - target;
+            
+            const formatted = diff >= 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1);
+            
+            // Determine color class based on metric type
+            let colorClass = 'neutral';
+            if (metricType === 'protein' || metricType === 'steps') {
+                // For protein and steps: positive is good (over/at target)
+                colorClass = diff >= 0 ? 'positive' : 'negative';
+            } else {
+                // For calories, netCalories, fat, carbs: negative is good (under/at target)
+                colorClass = diff <= 0 ? 'positive' : 'negative';
+            }
+            
+            return {
+                value: formatted,
+                raw: diff,
+                class: colorClass
+            };
+        }
+        
+        // Store calculated data for export
+        let calculatedCardsData = [];
+        
+        // Display data for all windows
+        function displayData() {
+            const windowsSection = document.getElementById('windowsSection');
+            windowsSection.innerHTML = '';
+            calculatedCardsData = []; // Reset stored data
+            
+            let windowCount = 0;
+            let maxWindowTotal = null;
+            let maxWindowDays = 0;
+            
+            // Create a card for each window
+            WINDOWS.forEach(windowDays => {
+                const windowTotal = calculateWindowTotal(windowDays);
+                
+                if (!windowTotal) {
+                    return;
+                }
+                
+                windowCount++;
+                
+                // Track the maximum window for summary
+                if (windowDays > maxWindowDays) {
+                    maxWindowDays = windowDays;
+                    maxWindowTotal = windowTotal;
+                }
+                
+                // Calculate total targets (daily target * number of days)
+                const totalCaloriesTarget = TARGETS.calories * windowDays;
+                const totalNetCaloriesTarget = TARGETS.netCalories * windowDays;
+                const totalProteinTarget = TARGETS.protein * windowDays;
+                const totalFatTarget = TARGETS.fat * windowDays;
+                const totalCarbsTarget = TARGETS.carbs * windowDays;
+                
+                // Store data for export (calculate differences first)
+                const caloriesDiff = formatDifference(windowTotal.calories, totalCaloriesTarget);
+                const netCaloriesDiff = formatDifference(windowTotal.netCalories, totalNetCaloriesTarget, 'netCalories');
+                
+                // Calculate weight gain/loss for calories (using raw diff from formatDifference)
+                const caloriesWeightChange = caloriesDiff.raw / 7700;
+                const caloriesWeightClass = caloriesWeightChange <= 0 ? 'positive' : 'negative';
+                const caloriesWeightText = caloriesWeightChange >= 0 ? `+${caloriesWeightChange.toFixed(2)}` : caloriesWeightChange.toFixed(2);
+                
+                // Calculate weight gain/loss for net calories (using raw diff from formatDifference)
+                const netCaloriesWeightChange = netCaloriesDiff.raw / 7700;
+                const netCaloriesWeightClass = netCaloriesWeightChange <= 0 ? 'positive' : 'negative';
+                const netCaloriesWeightText = netCaloriesWeightChange >= 0 ? `+${netCaloriesWeightChange.toFixed(2)}` : netCaloriesWeightChange.toFixed(2);
+                const proteinDiff = formatDifference(windowTotal.protein, totalProteinTarget, 'protein');
+                const fatDiff = formatDifference(windowTotal.fat, totalFatTarget);
+                const carbsDiff = formatDifference(windowTotal.carbs, totalCarbsTarget);
+                
+                calculatedCardsData.push({
+                    windowDays: windowDays,
+                    calories: {
+                        actual: windowTotal.calories,
+                        target: totalCaloriesTarget,
+                        diff: caloriesDiff.raw,
+                        diffFormatted: caloriesDiff.value,
+                        weightChange: caloriesWeightChange
+                    },
+                    netCalories: {
+                        actual: windowTotal.netCalories,
+                        target: totalNetCaloriesTarget,
+                        diff: netCaloriesDiff.raw,
+                        diffFormatted: netCaloriesDiff.value,
+                        weightChange: netCaloriesWeightChange
+                    },
+                    protein: {
+                        actual: windowTotal.protein,
+                        target: totalProteinTarget,
+                        diff: proteinDiff.raw,
+                        diffFormatted: proteinDiff.value
+                    },
+                    fat: {
+                        actual: windowTotal.fat,
+                        target: totalFatTarget,
+                        diff: fatDiff.raw,
+                        diffFormatted: fatDiff.value
+                    },
+                    carbs: {
+                        actual: windowTotal.carbs,
+                        target: totalCarbsTarget,
+                        diff: carbsDiff.raw,
+                        diffFormatted: carbsDiff.value
+                    }
+                });
+                
+                const windowCard = document.createElement('div');
+                windowCard.className = 'window-card';
+                
+                const windowHTML = `
+                    <div class="window-header">${windowDays} ימים</div>
+                    
+                    <div class="metric-header">
+                        <div class="metric-row" style="padding: 5px; font-weight: bold; background: #f8f9fa;">
+                            <div>מטריקה</div>
+                            <div>בפועל</div>
+                            <div>יעד</div>
+                            <div>הפרש</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <div class="metric-label">קלוריות מתזונה</div>
+                        <div class="metric-actual">${windowTotal.calories.toFixed(0)}</div>
+                        <div class="metric-target">${totalCaloriesTarget}</div>
+                        <div class="metric-diff ${formatDifference(windowTotal.calories, totalCaloriesTarget).class}">
+                            ${formatDifference(windowTotal.calories, totalCaloriesTarget).value}
+                        </div>
+                    </div>
+                    <div class="metric-row" style="padding: 5px 15px; font-size: 0.85rem; color: #666;">
+                        <div class="metric-label"></div>
+                        <div></div>
+                        <div></div>
+                        <div style="text-align: center;">
+                            <span class="weight-loss-value ${caloriesWeightClass}">${caloriesWeightText} ק"ג</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <div class="metric-label">קלוריות בניכוי צעדים</div>
+                        <div class="metric-actual">${windowTotal.netCalories.toFixed(0)}</div>
+                        <div class="metric-target">${totalNetCaloriesTarget}</div>
+                        <div class="metric-diff ${formatDifference(windowTotal.netCalories, totalNetCaloriesTarget, 'netCalories').class}">
+                            ${formatDifference(windowTotal.netCalories, totalNetCaloriesTarget, 'netCalories').value}
+                        </div>
+                    </div>
+                    <div class="metric-row" style="padding: 5px 15px; font-size: 0.85rem; color: #666;">
+                        <div class="metric-label"></div>
+                        <div></div>
+                        <div></div>
+                        <div style="text-align: center;">
+                            <span class="weight-loss-value ${netCaloriesWeightClass}">${netCaloriesWeightText} ק"ג</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <div class="metric-label">💪 חלבון (גרם)</div>
+                        <div class="metric-actual">${windowTotal.protein.toFixed(1)}</div>
+                        <div class="metric-target">${totalProteinTarget}</div>
+                        <div class="metric-diff ${formatDifference(windowTotal.protein, totalProteinTarget, 'protein').class}">
+                            ${formatDifference(windowTotal.protein, totalProteinTarget, 'protein').value}
+                        </div>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <div class="metric-label">🥑 שומן (גרם)</div>
+                        <div class="metric-actual">${windowTotal.fat.toFixed(1)}</div>
+                        <div class="metric-target">${totalFatTarget}</div>
+                        <div class="metric-diff ${formatDifference(windowTotal.fat, totalFatTarget).class}">
+                            ${formatDifference(windowTotal.fat, totalFatTarget).value}
+                        </div>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <div class="metric-label">🍞 פחמימות (גרם)</div>
+                        <div class="metric-actual">${windowTotal.carbs.toFixed(1)}</div>
+                        <div class="metric-target">${totalCarbsTarget}</div>
+                        <div class="metric-diff ${formatDifference(windowTotal.carbs, totalCarbsTarget).class}">
+                            ${formatDifference(windowTotal.carbs, totalCarbsTarget).value}
+                        </div>
+                    </div>
+                `;
+                
+                windowCard.innerHTML = windowHTML;
+                windowsSection.appendChild(windowCard);
+            });
+            
+            // Display summary statistics (Net Calorie Gap and Weight Loss for all windows)
+            if (windowCount > 0) {
+                const summaryStats = document.getElementById('summaryStats');
+                
+                let summaryRows = '';
+                
+                // Calculate gaps and weight loss for each window
+                WINDOWS.forEach(windowDays => {
+                    const windowTotal = calculateWindowTotal(windowDays);
+                    
+                    if (!windowTotal) {
+                        return;
+                    }
+                    
+                    const totalCaloriesTarget = TARGETS.calories * windowDays;
+                    const caloriesGap = windowTotal.calories - totalCaloriesTarget;
+                    // Weight loss from calories gap = caloriesGap / 7700
+                    const caloriesWeightLoss = caloriesGap / 7700;
+                    
+                    const totalNetCaloriesTarget = TARGETS.netCalories * windowDays;
+                    const netGap = windowTotal.netCalories - totalNetCaloriesTarget;
+                    // Weight loss = netGap / 7700 (negative = weight loss = good)
+                    const weightLoss = netGap / 7700;
+                    
+                    // Calculate macro gaps (same formula as cards: actual - target)
+                    const totalProteinTarget = TARGETS.protein * windowDays;
+                    const totalFatTarget = TARGETS.fat * windowDays;
+                    const totalCarbsTarget = TARGETS.carbs * windowDays;
+                    
+                    const proteinGap = windowTotal.protein - totalProteinTarget; // actual - target (same as cards)
+                    const fatGap = windowTotal.fat - totalFatTarget; // actual - target (same as cards)
+                    const carbsGap = windowTotal.carbs - totalCarbsTarget; // actual - target (same as cards)
+                    
+                    // Determine classes for color coding (same logic as formatDifference function)
+                    const caloriesGapClass = caloriesGap <= 0 ? 'negative' : 'positive'; // Negative gap is good (under target)
+                    const caloriesWeightLossClass = caloriesWeightLoss <= 0 ? 'positive' : 'negative'; // Negative weight loss is good (losing weight)
+                    const gapClass = netGap <= 0 ? 'negative' : 'positive'; // Negative gap is good (under target)
+                    const weightLossClass = weightLoss <= 0 ? 'positive' : 'negative'; // Negative weight loss is good (losing weight)
+                    // For protein: positive is good (over/at target), negative is bad (under target)
+                    const proteinGapClass = proteinGap >= 0 ? 'positive' : 'negative';
+                    // For fat and carbs: negative is good (under/at target), positive is bad (over target)
+                    const fatGapClass = fatGap <= 0 ? 'positive' : 'negative';
+                    const carbsGapClass = carbsGap <= 0 ? 'positive' : 'negative';
+                    
+                    summaryRows += `
+                        <tr>
+                            <td><strong>${windowDays} ימים</strong></td>
+                            <td>
+                                <div>
+                                    <span class="gap-value ${caloriesGapClass}">
+                                        ${caloriesGap >= 0 ? '+' : ''}${caloriesGap.toFixed(0)} קלוריות
+                                    </span>
+                                </div>
+                                <div style="margin-top: 5px;">
+                                    <span class="weight-loss-value ${caloriesWeightLossClass}">
+                                        ${caloriesWeightLoss >= 0 ? '+' : ''}${caloriesWeightLoss.toFixed(2)} ק"ג
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <span class="gap-value ${gapClass}">
+                                        ${netGap >= 0 ? '+' : ''}${netGap.toFixed(0)} קלוריות
+                                    </span>
+                                </div>
+                                <div style="margin-top: 5px;">
+                                    <span class="weight-loss-value ${weightLossClass}">
+                                        ${weightLoss >= 0 ? '+' : ''}${weightLoss.toFixed(2)} ק"ג
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="gap-value ${proteinGapClass}">
+                                    ${proteinGap >= 0 ? '+' : ''}${proteinGap.toFixed(1)} גרם
+                                </span>
+                            </td>
+                            <td>
+                                <span class="gap-value ${fatGapClass}">
+                                    ${fatGap >= 0 ? '+' : ''}${fatGap.toFixed(1)} גרם
+                                </span>
+                            </td>
+                            <td>
+                                <span class="gap-value ${carbsGapClass}">
+                                    ${carbsGap >= 0 ? '+' : ''}${carbsGap.toFixed(1)} גרם
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                summaryStats.innerHTML = `
+                    <div class="summary-header">📊 סיכום פערים</div>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>חלון זמן</th>
+                                <th>פער קלוריות מתזונה</th>
+                                <th>פער קלוריות בניכוי צעדים</th>
+                                <th>פער חלבון</th>
+                                <th>פער שומן</th>
+                                <th>פער פחמימות</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${summaryRows}
+                        </tbody>
+                    </table>
+                `;
+                summaryStats.style.display = 'block';
+            }
+        }
+        
+        // Export table and cards to Excel
+        function exportToExcel() {
+            if (calculatedCardsData.length === 0) {
+                alert('אין נתונים לייצוא. אנא טען נתונים קודם.');
+                return;
+            }
+            
+            let csvContent = '';
+            
+            // Export cards data first
+            csvContent += 'כרטיסים - נתונים מפורטים\n';
+            const cardsHeaders = [
+                'חלון זמן (ימים)',
+                'קלוריות מתזונה - בפועל',
+                'קלוריות מתזונה - יעד',
+                'קלוריות מתזונה - הפרש',
+                'קלוריות מתזונה - שינוי משקל (ק"ג)',
+                'קלוריות בניכוי צעדים - בפועל',
+                'קלוריות בניכוי צעדים - יעד',
+                'קלוריות בניכוי צעדים - הפרש',
+                'קלוריות בניכוי צעדים - שינוי משקל (ק"ג)',
+                'חלבון - בפועל (גרם)',
+                'חלבון - יעד (גרם)',
+                'חלבון - הפרש (גרם)',
+                'שומן - בפועל (גרם)',
+                'שומן - יעד (גרם)',
+                'שומן - הפרש (גרם)',
+                'פחמימות - בפועל (גרם)',
+                'פחמימות - יעד (גרם)',
+                'פחמימות - הפרש (גרם)'
+            ];
+            csvContent += cardsHeaders.join(',') + '\n';
+            
+            calculatedCardsData.forEach(card => {
+                const rowData = [
+                    card.windowDays || '',
+                    card.calories.actual ? card.calories.actual.toFixed(0) : '',
+                    card.calories.target ? card.calories.target.toFixed(0) : '',
+                    card.calories.diffFormatted || '',
+                    card.calories.weightChange ? card.calories.weightChange.toFixed(2) : '',
+                    card.netCalories.actual ? card.netCalories.actual.toFixed(0) : '',
+                    card.netCalories.target ? card.netCalories.target.toFixed(0) : '',
+                    card.netCalories.diffFormatted || '',
+                    card.netCalories.weightChange ? card.netCalories.weightChange.toFixed(2) : '',
+                    card.protein.actual ? card.protein.actual.toFixed(1) : '',
+                    card.protein.target ? card.protein.target.toFixed(1) : '',
+                    card.protein.diffFormatted || '',
+                    card.fat.actual ? card.fat.actual.toFixed(1) : '',
+                    card.fat.target ? card.fat.target.toFixed(1) : '',
+                    card.fat.diffFormatted || '',
+                    card.carbs.actual ? card.carbs.actual.toFixed(1) : '',
+                    card.carbs.target ? card.carbs.target.toFixed(1) : '',
+                    card.carbs.diffFormatted || ''
+                ];
+                
+                // Escape and wrap in quotes
+                const escapedRow = rowData.map(cell => {
+                    let cellText = String(cell || '');
+                    if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                        cellText = ' ' + cellText;
+                    }
+                    cellText = cellText.replace(/\/(\s*)-/g, '/ -');
+                    return '"' + cellText.replace(/"/g, '""') + '"';
+                });
+                
+                csvContent += escapedRow.join(',') + '\n';
+            });
+            
+            // Add separator
+            csvContent += '\n';
+            csvContent += 'טבלת סיכום פערים\n';
+            
+            // Export summary table
+            const tables = document.querySelectorAll('table');
+            if (tables.length > 0) {
+                const table = tables[0];
+                const tbody = table.querySelector('tbody');
+                
+                if (tbody) {
+                    const rows = tbody.querySelectorAll('tr');
+                    
+                    // Get headers from thead
+                    const thead = table.querySelector('thead');
+                    if (thead) {
+                        const headerRows = thead.querySelectorAll('tr');
+                        headerRows.forEach(headerRow => {
+                            const headerCells = headerRow.querySelectorAll('th');
+                            const headerData = [];
+                            headerCells.forEach(cell => {
+                                let cellText = cell.textContent.trim();
+                                if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                                    cellText = ' ' + cellText;
+                                }
+                                if (cellText.includes(',') || cellText.includes('"')) {
+                                    cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                                }
+                                headerData.push(cellText || '');
+                            });
+                            csvContent += headerData.join(',') + '\n';
+                        });
+                    }
+                    
+                    // Get all data rows
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length === 0) return;
+                        
+                        const rowData = [];
+                        
+                        cells.forEach((cell) => {
+                            let cellText = cell.textContent.trim() || cell.innerText.trim();
+                            
+                            if (!cellText) {
+                                rowData.push('""');
+                                return;
+                            }
+                            
+                            if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                                cellText = ' ' + cellText;
+                            }
+                            
+                            cellText = cellText.replace(/\/(\s*)-/g, '/ -');
+                            cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                            
+                            rowData.push(cellText);
+                        });
+                        
+                        csvContent += rowData.join(',') + '\n';
+                    });
+                }
+            }
+            
+            // Create BOM for UTF-8 (Excel compatibility with Hebrew)
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // Create download link
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            
+            // Generate filename with current date
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + 
+                           String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(now.getDate()).padStart(2, '0');
+            link.setAttribute('download', `יעדים_מול_בפועל_${dateStr}.csv`);
+            
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,981 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניתוח גירעון קלורי - עם יעד (מינוס יום אחד) - טבלה</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .goals-config {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .goals-config h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .goal-input {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .goal-input label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .goal-input input, .goal-input select {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .goal-input input:focus, .goal-input select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .goal-input input[readonly] {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        
+        .tdee-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .tdee-info h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .tdee-info p {
+            color: #424242;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .secondary-button {
+            background: #95a5a6;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 50px 0;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease;
+        }
+        
+        tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        td {
+            padding: 12px 15px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        
+        .value-positive {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        
+        .value-negative {
+            color: #c62828;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 1200px) {
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📉 ניתוח גירעון קלורי - עם יעד (מינוס יום אחד) - טבלה</h1>
+            <p>השוואת נתונים בפועל (ללא היום האחרון) מול יעד קלורי לחלון זמן מלא</p>
+        </div>
+        
+        <!-- TDEE and Target Configuration -->
+        <div class="goals-config">
+            <h2>⚙️ הגדרת TDEE ויעד</h2>
+            <div class="tdee-info">
+                <h3>ℹ️ מידע על TDEE</h3>
+                <p>ה-TDEE מחושב אוטומטית מנתוני המשקל והתזונה לכל חלון זמן. הערך המוצג הוא "Net TDEE" המחושב כ: ממוצע קלוריות + ממוצע TDEE ליום - קלוריות מצעדים. בחר חלון זמן מהתפריט כדי להשתמש ב-TDEE של אותו חלון לחישוב היעדים.</p>
+            </div>
+            <div class="goals-grid">
+                <div class="goal-input">
+                    <label>📅 בחר חלון זמן ל-TDEE</label>
+                    <select id="tdeeWindowSelect" onchange="updateTdeeFromSelection()">
+                        <option value="">טוען...</option>
+                    </select>
+                </div>
+                <div class="goal-input">
+                    <label>🎯 יעד קלורי</label>
+                    <input type="number" id="calorieTarget" value="2400" min="0" step="10" readonly>
+                </div>
+                <div class="goal-input">
+                    <label>🎯 גירעון קלורי שבועי (קלוריות לשבוע)</label>
+                    <input type="number" id="weeklyDeficitTarget" value="0" min="0" step="10" onchange="updateCalorieTarget(); if(nutritionData.length > 0) displayData();">
+                </div>
+                <div class="goal-input">
+                    <label>⚖️ גירעון שבועי בגרמים</label>
+                    <input type="number" id="gramsDeficit" value="0" min="0" step="10" placeholder="לדוגמה: 100">
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button onclick="calculateFromGrams()">חשב מיגרמים</button>
+                <button onclick="updateGoals()">עדכן הגדרות</button>
+                <button onclick="loadData()" class="secondary-button">טען נתונים</button>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            🔄 טוען נתונים...
+        </div>
+        
+        <div id="error" class="error" style="display: none;">
+            ❌ שגיאה בטעינת הנתונים.
+            <button onclick="loadData()" style="margin-left: 10px; padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                נסה שוב
+            </button>
+        </div>
+        
+        <div id="content" style="display: none;">
+            <div class="summary-container" style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa, #c3cfe2); border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h3 style="margin-top: 0; color: #2c3e50; text-align: right;">📊 סיכום</h3>
+                <div class="summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 15px;">
+                    <div class="summary-item" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">ממוצע פער מול יעד</div>
+                        <div id="avgCalorieTargetGap" style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                    <div class="summary-item" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">ממוצע פער מול TDEE</div>
+                        <div id="avgTdeeGap" style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                    <div class="summary-item" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">פער מול יעד מקסימלי</div>
+                        <div id="maxCalorieTargetGap" style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                    <div class="summary-item" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">פער מול יעד מינימלי</div>
+                        <div id="minCalorieTargetGap" style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                    <div class="summary-item" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">פער מול TDEE מקסימלי</div>
+                        <div id="maxTdeeGap" style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                    <div class="summary-item" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">פער מול TDEE מינימלי</div>
+                        <div id="minTdeeGap" style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 15px; text-align: left;">
+                <button onclick="exportToExcel()" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    📥 ייצא ל-Excel
+                </button>
+            </div>
+            
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>חלון זמן (ימים)</th>
+                            <th>ימים בפועל</th>
+                            <th>קלוריות בפועל</th>
+                            <th>יעד קלורי</th>
+                            <th>פער מול יעד</th>
+                            <th>TDEE לחלון</th>
+                            <th>פער מול TDEE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
+        
+        // Default TDEE and weekly deficit target
+        let TDEE = 2034;
+        let WEEKLY_DEFICIT_TARGET = 0;
+        
+        let nutritionData = [];
+        let weightData = [];
+        let windowTdeeMap = {}; // Map window size to calculated TDEE
+        
+        const WINDOWS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+        const windowSizes = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 28];
+        
+        // Parse DD/MM/YYYY date format
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        // Format date as DD/MM/YYYY
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Subtract one day from a date
+        function subtractOneDay(dateStr) {
+            const date = parseDate(dateStr);
+            if (!date) return null;
+            date.setDate(date.getDate() - 1);
+            return formatDate(date);
+        }
+        
+        // Sort data by date ascending
+        function sortDataAsc(data) {
+            return [...data].sort((a, b) => {
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                if (!dateA || !dateB) return 0;
+                return dateA - dateB;
+            });
+        }
+        
+        // Create non-overlapping chunks
+        function createChunks(data, windowSize) {
+            const chunks = [];
+            for (let i = 0; i < data.length; i += windowSize) {
+                chunks.push(data.slice(i, i + windowSize));
+            }
+            return chunks;
+        }
+        
+        // Calculate mean
+        function calculateMean(values) {
+            if (values.length === 0) return 0;
+            const validValues = values.filter(v => v !== null && v !== undefined && !isNaN(v));
+            if (validValues.length === 0) return 0;
+            return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+        }
+        
+        // Process window analysis for weight data
+        function processWindowAnalysis(data, windowSize) {
+            const sortedData = sortDataAsc(data);
+            const chunks = createChunks(sortedData, windowSize);
+            
+            const results = [];
+            
+            chunks.forEach((chunk, index) => {
+                if (chunk.length === 0) return;
+                
+                // Only include full windows (exactly windowSize days)
+                if (chunk.length !== windowSize) return;
+                
+                const weights = chunk.map(item => item.weight);
+                const average = calculateMean(weights);
+                const dateRange = `${chunk[0].date} - ${chunk[chunk.length - 1].date}`;
+                
+                const result = {
+                    window: windowSize,
+                    range: dateRange,
+                    average: average,
+                    delta: null,
+                    index: index + 1,
+                    daysCount: chunk.length,
+                    startDate: chunk[0].date,
+                    endDate: chunk[chunk.length - 1].date
+                };
+                
+                // Calculate delta vs previous window
+                if (index > 0) {
+                    // Find the previous full window
+                    for (let prevIndex = index - 1; prevIndex >= 0; prevIndex--) {
+                        if (chunks[prevIndex].length === windowSize) {
+                            const prevWeights = chunks[prevIndex].map(item => item.weight);
+                            const prevAverage = calculateMean(prevWeights);
+                            result.delta = average - prevAverage;
+                            break;
+                        }
+                    }
+                }
+                
+                results.push(result);
+            });
+            
+            return results;
+        }
+        
+        // Get nutrition data for a date range (calories dates are -1 day from weight dates)
+        function getNutritionForWindow(nutritionData, startDate, endDate) {
+            // Calculate calories dates (weight dates - 1 day)
+            const caloriesStartDate = subtractOneDay(startDate);
+            const caloriesEndDate = subtractOneDay(endDate);
+            
+            if (!caloriesStartDate || !caloriesEndDate) {
+                return { avgCalories: 0, totalCalories: 0, avgSteps: 0, caloriesRange: '--' };
+            }
+            
+            // Check if first row is header
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            const dataStartIndex = hasHeader ? 1 : 0;
+            
+            // Data is ordered from newest to oldest, so we need to find matching dates
+            const calories = [];
+            const steps = [];
+            
+            for (let i = dataStartIndex; i < nutritionData.length; i++) {
+                const row = nutritionData[i];
+                if (!row || row.length === 0) continue;
+                
+                const rowDate = row[0];
+                if (!rowDate) continue;
+                
+                // Check if date is within range (inclusive)
+                const date = parseDate(rowDate);
+                const start = parseDate(caloriesStartDate);
+                const end = parseDate(caloriesEndDate);
+                
+                if (!date || !start || !end) continue;
+                
+                // Compare dates (accounting for order - data might be newest to oldest)
+                const isInRange = (date >= start && date <= end) || (date >= end && date <= start);
+                
+                if (isInRange) {
+                    const cal = parseFloat(row[1]) || 0; // Calories in column 1
+                    const step = parseFloat(row[6]) || 0; // Steps in column 6
+                    
+                    if (cal > 0) calories.push(cal);
+                    if (step > 0) steps.push(step);
+                }
+            }
+            
+            const avgCalories = calculateMean(calories);
+            const totalCalories = calories.reduce((sum, cal) => sum + cal, 0);
+            const avgSteps = calculateMean(steps);
+            
+            return {
+                avgCalories: avgCalories,
+                totalCalories: totalCalories,
+                avgSteps: avgSteps,
+                caloriesRange: `${caloriesStartDate} - ${caloriesEndDate}`
+            };
+        }
+        
+        // Simple TDEE calculation: delta × 7700
+        function calculateTDEE(delta) {
+            if (delta === null || delta === undefined) {
+                return 0;
+            }
+            
+            // Round delta to 2 decimal places to avoid floating point precision issues
+            const deltaRounded = Math.round(Math.abs(delta) * 100) / 100;
+            
+            // If delta is positive (weight gain), TDEE should be negative
+            // If delta is negative (weight loss), TDEE should be positive
+            const tdee = delta >= 0 ? -(deltaRounded * 7700) : (deltaRounded * 7700);
+            
+            return tdee;
+        }
+        
+        // Calculate Net TDEE for a window
+        function calculateNetTDEE(windowSize, weightData, nutritionData) {
+            const results = processWindowAnalysis(weightData, windowSize);
+            const lastThreeFullWindows = results.filter(r => r.daysCount === windowSize);
+            
+            if (lastThreeFullWindows.length === 0) {
+                return null;
+            }
+            
+            // Get the last window's delta (change from previous window)
+            const lastWindow = lastThreeFullWindows[lastThreeFullWindows.length - 1];
+            const delta = lastWindow.delta;
+            
+            if (delta === null || delta === undefined) {
+                return null;
+            }
+            
+            // Get nutrition data for this window (calories dates are -1 day)
+            const nutrition = getNutritionForWindow(nutritionData, lastWindow.startDate, lastWindow.endDate);
+            
+            // Simple TDEE calculation: delta × 7700
+            const tdee = calculateTDEE(delta);
+            
+            // Average TDEE per day = TDEE / window days
+            const avgTdeePerDay = windowSize > 0 ? tdee / windowSize : 0;
+            
+            // Calories from steps = Average Steps / 25
+            const caloriesFromSteps = nutrition.avgSteps / 25;
+            
+            // Net TDEE = ממוצע קלוריות + ממוצע TDEE ליום - קלוריות מצעדים
+            const netTdee = Math.round(nutrition.avgCalories) + Math.round(avgTdeePerDay) - Math.round(caloriesFromSteps);
+            
+            return netTdee;
+        }
+        
+        // Populate TDEE dropdown with available windows
+        function populateTdeeDropdown() {
+            const select = document.getElementById('tdeeWindowSelect');
+            select.innerHTML = '<option value="">בחר חלון...</option>';
+            
+            // Sort windows by size
+            const sortedWindows = Object.keys(windowTdeeMap).map(Number).sort((a, b) => a - b);
+            
+            sortedWindows.forEach(windowSize => {
+                const tdee = windowTdeeMap[windowSize];
+                const option = document.createElement('option');
+                option.value = windowSize;
+                option.textContent = `${windowSize} ימים - TDEE: ${tdee}`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Update calorie target display
+        function updateCalorieTarget() {
+            const dailyDeficit = WEEKLY_DEFICIT_TARGET / 7;
+            const calorieTarget = TDEE - dailyDeficit;
+            document.getElementById('calorieTarget').value = Math.round(calorieTarget);
+        }
+        
+        // Update TDEE from dropdown selection
+        function updateTdeeFromSelection() {
+            const select = document.getElementById('tdeeWindowSelect');
+            const selectedValue = select.value;
+            
+            if (!selectedValue) {
+                return;
+            }
+            
+            let selectedTdee;
+            
+            if (selectedValue === 'average') {
+                // Calculate average of all available TDEE values
+                const tdeeValues = Object.values(windowTdeeMap);
+                selectedTdee = Math.round(tdeeValues.reduce((a, b) => a + b, 0) / tdeeValues.length);
+            } else {
+                // Use the selected window's TDEE
+                const windowSize = parseInt(selectedValue);
+                selectedTdee = windowTdeeMap[windowSize];
+            }
+            
+            if (selectedTdee !== undefined && selectedTdee !== null) {
+                TDEE = selectedTdee;
+                updateCalorieTarget();
+                
+                // Refresh display with new TDEE
+                if (nutritionData.length > 0) {
+                    displayData();
+                }
+            }
+        }
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+        
+        // Calculate weekly deficit from grams
+        function calculateFromGrams() {
+            const gramsDeficit = parseFloat(document.getElementById('gramsDeficit').value) || 0;
+            
+            if (gramsDeficit <= 0) {
+                alert('אנא הכנס גירעון בגרמים חיובי');
+                return;
+            }
+            
+            // Convert grams to calories: 1 gram = 7 calories
+            // Weekly deficit = grams per week * 7
+            // (150 grams = 1050 calories)
+            const weeklyDeficitFromGrams = gramsDeficit * 7;
+            
+            // Update the weekly deficit target input
+            document.getElementById('weeklyDeficitTarget').value = Math.round(weeklyDeficitFromGrams);
+            
+            // Update the variable and refresh display
+            WEEKLY_DEFICIT_TARGET = Math.round(weeklyDeficitFromGrams);
+            updateCalorieTarget();
+            
+            // Reload data with new settings
+            if (nutritionData.length > 0) {
+                displayData();
+            } else {
+                loadData();
+            }
+        }
+        
+        // Update goals from form inputs
+        function updateGoals() {
+            WEEKLY_DEFICIT_TARGET = parseInt(document.getElementById('weeklyDeficitTarget').value) || 0;
+            updateCalorieTarget();
+            
+            // Reload data with new settings
+            if (nutritionData.length > 0) {
+                displayData();
+            } else {
+                loadData();
+            }
+        }
+        
+        // Load nutrition and weight data from Google Sheets
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const content = document.getElementById('content');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            content.style.display = 'none';
+            
+            try {
+                // Load weight data
+                const weightResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=get`);
+                const weightDataResponse = await weightResponse.json();
+                
+                // Load nutrition data
+                const nutritionResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=getNutrition`);
+                const nutritionDataResponse = await nutritionResponse.json();
+                
+                if (!weightDataResponse.success || !weightDataResponse.data || weightDataResponse.data.length === 0) {
+                    throw new Error('לא נמצאו נתוני משקל');
+                }
+                
+                if (!nutritionDataResponse.success || !nutritionDataResponse.data) {
+                    throw new Error('לא נמצאו נתוני תזונה');
+                }
+                
+                // Check if first row is header for weight data
+                const hasHeader = weightDataResponse.data[0] && weightDataResponse.data[0][0] && 
+                                 (typeof weightDataResponse.data[0][0] === 'string') && 
+                                 (weightDataResponse.data[0][0].includes('תאריך') || weightDataResponse.data[0][0].includes('Date') || 
+                                  weightDataResponse.data[0][0].includes('משקל') || weightDataResponse.data[0][0].includes('Weight'));
+                
+                const startIndex = hasHeader ? 1 : 0;
+                
+                // Convert weight data to the format we need
+                // Data is ordered from newest to oldest, so we need to reverse it
+                const rawWeightData = weightDataResponse.data.slice(startIndex).reverse();
+                
+                weightData = rawWeightData.map(row => ({
+                    date: row[0], // Date
+                    weight: parseFloat(row[1]) // Weight
+                })).filter(item => item.weight > 0 && item.date); // Filter out invalid entries
+                
+                nutritionData = nutritionDataResponse.data;
+                
+                // Calculate TDEE for each window
+                windowTdeeMap = {};
+                windowSizes.forEach(windowSize => {
+                    const netTdee = calculateNetTDEE(windowSize, weightData, nutritionData);
+                    if (netTdee !== null) {
+                        windowTdeeMap[windowSize] = netTdee;
+                    }
+                });
+                
+                // Populate TDEE selection dropdown
+                populateTdeeDropdown();
+                
+                // Set default TDEE (prefer 14 days, otherwise first available)
+                const tdeeValues = Object.values(windowTdeeMap);
+                if (tdeeValues.length > 0) {
+                    const select = document.getElementById('tdeeWindowSelect');
+                    const avgTdee = Math.round(tdeeValues.reduce((a, b) => a + b, 0) / tdeeValues.length);
+                    // Add "average" option if we have multiple windows
+                    if (tdeeValues.length > 1) {
+                        const avgOption = document.createElement('option');
+                        avgOption.value = 'average';
+                        avgOption.textContent = `ממוצע (${avgTdee})`;
+                        select.insertBefore(avgOption, select.firstChild);
+                    }
+                    
+                    // Default to 14 days if available, otherwise use first available
+                    if (windowTdeeMap[28] !== undefined) {
+                        select.value = '28';
+                    } else if (windowTdeeMap[14] !== undefined) {
+                        select.value = '14';
+                    } else {
+                        const firstWindow = Object.keys(windowTdeeMap)[0];
+                        select.value = firstWindow;
+                    }
+                    updateTdeeFromSelection();
+                }
+                
+                displayData();
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (error) {
+                console.error('Error loading data:', error);
+                loading.style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = `❌ שגיאה בטעינת הנתונים: ${error.message}`;
+            }
+        }
+        
+        // Calculate target gap for a specific window
+        // Data structure from Google Sheets: 
+        // - Row 0: Header row (may exist, check for 'Date' or 'תאריך'), then data starts
+        // - Data is ordered from NEW to OLD (newest dates first)
+        // - Take the first (windowDays - 1) days from the data (starting from row 0 if no header, row 1 if header exists)
+        // Target: calculated for full windowDays
+        function calculateWindowGap(windowDays) {
+            // Check if first row is header (contains 'Date' or 'תאריך')
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            // Need at least: (windowDays - 1) data rows, plus 1 if header exists
+            const minRequired = hasHeader ? windowDays : windowDays - 1;
+            if (!nutritionData || nutritionData.length < minRequired) {
+                return null;
+            }
+            
+            // If header exists, skip it (start from index 1), otherwise start from index 0
+            // Take the first (windowDays - 1) days from the data
+            // For 3-day window: take indices [0, 1] = first 2 days (01/11 and 31/10)
+            const startIndex = hasHeader ? 1 : 0; // Skip header if exists, otherwise start from row 0
+            const actualData = nutritionData.slice(startIndex, startIndex + (windowDays - 1));
+            
+            let totalCalories = 0;
+            let validDays = 0;
+            
+            actualData.forEach(row => {
+                if (row && row.length >= 7) {
+                    const calories = parseFloat(row[1]) || 0;
+                    totalCalories += calories;
+                    validDays++;
+                }
+            });
+            
+            if (validDays === 0) {
+                return null;
+            }
+            
+            // Use the selected TDEE (from dropdown) for all calculations
+            const selectedTdee = TDEE;
+            
+            // Calculate TDEE for the full window
+            const windowTDEE = selectedTdee * windowDays;
+            
+            // Calculate calorie target for the full window
+            // Formula: TDEE - (weekly_deficit / 7 * window_days)
+            const windowDeficitTarget = (WEEKLY_DEFICIT_TARGET / 7) * windowDays;
+            const calorieTarget = windowTDEE - windowDeficitTarget;
+            
+            // Calculate gaps: Target - Actual (positive gap = under target = good)
+            const calorieTargetGap = calorieTarget - totalCalories;
+            const tdeeGap = windowTDEE - totalCalories;
+            
+            return {
+                windowDays: windowDays,
+                actualDays: validDays,
+                totalCalories: totalCalories,
+                windowTDEE: windowTDEE,
+                calorieTarget: calorieTarget,
+                calorieTargetGap: calorieTargetGap,
+                tdeeGap: tdeeGap
+            };
+        }
+        
+        // Display data in table format
+        function displayData() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            // Arrays to store gap values for summary calculations
+            const allCalorieTargetGaps = [];
+            const allTdeeGaps = [];
+            
+            // Create a row for each window
+            WINDOWS.forEach(windowDays => {
+                const gapData = calculateWindowGap(windowDays);
+                
+                if (!gapData) {
+                    // Show empty row if no data
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${windowDays}</td>
+                        <td colspan="6" style="color: #999; font-style: italic;">אין מספיק נתונים</td>
+                    `;
+                    tableBody.appendChild(row);
+                    return;
+                }
+                
+                // Gaps: positive is good (under target/TDEE), negative is bad (over target/TDEE)
+                const calorieGapClass = gapData.calorieTargetGap >= 0 ? 'value-positive' : 'value-negative';
+                const tdeeGapClass = gapData.tdeeGap >= 0 ? 'value-positive' : 'value-negative';
+                const calorieGapSign = gapData.calorieTargetGap >= 0 ? '+' : '';
+                const tdeeGapSign = gapData.tdeeGap >= 0 ? '+' : '';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${gapData.windowDays}</strong></td>
+                    <td>${gapData.actualDays}</td>
+                    <td>${gapData.totalCalories.toFixed(0)}</td>
+                    <td>${gapData.calorieTarget.toFixed(0)}</td>
+                    <td class="${calorieGapClass}">${calorieGapSign}${gapData.calorieTargetGap.toFixed(0)}</td>
+                    <td>${gapData.windowTDEE.toFixed(0)}</td>
+                    <td class="${tdeeGapClass}">${tdeeGapSign}${gapData.tdeeGap.toFixed(0)}</td>
+                `;
+                
+                tableBody.appendChild(row);
+                
+                // Store gap values for summary (only if we have valid data)
+                allCalorieTargetGaps.push(gapData.calorieTargetGap);
+                allTdeeGaps.push(gapData.tdeeGap);
+            });
+            
+            // Calculate and display summary from gap values
+            if (allCalorieTargetGaps.length > 0) {
+                // Calculate averages of gaps
+                const avgCalorieTargetGap = allCalorieTargetGaps.reduce((a, b) => a + b, 0) / allCalorieTargetGaps.length;
+                const avgTdeeGap = allTdeeGaps.reduce((a, b) => a + b, 0) / allTdeeGaps.length;
+                
+                // Find max and min gaps
+                const maxCalorieTargetGap = Math.max(...allCalorieTargetGaps);
+                const minCalorieTargetGap = Math.min(...allCalorieTargetGaps);
+                const maxTdeeGap = Math.max(...allTdeeGaps);
+                const minTdeeGap = Math.min(...allTdeeGaps);
+                
+                // Update summary display
+                document.getElementById('avgCalorieTargetGap').textContent = avgCalorieTargetGap.toFixed(0);
+                document.getElementById('avgTdeeGap').textContent = avgTdeeGap.toFixed(0);
+                document.getElementById('maxCalorieTargetGap').textContent = maxCalorieTargetGap.toFixed(0);
+                document.getElementById('minCalorieTargetGap').textContent = minCalorieTargetGap.toFixed(0);
+                document.getElementById('maxTdeeGap').textContent = maxTdeeGap.toFixed(0);
+                document.getElementById('minTdeeGap').textContent = minTdeeGap.toFixed(0);
+            } else {
+                // No data available
+                document.getElementById('avgCalorieTargetGap').textContent = '-';
+                document.getElementById('avgTdeeGap').textContent = '-';
+                document.getElementById('maxCalorieTargetGap').textContent = '-';
+                document.getElementById('minCalorieTargetGap').textContent = '-';
+                document.getElementById('maxTdeeGap').textContent = '-';
+                document.getElementById('minTdeeGap').textContent = '-';
+            }
+        }
+        
+        // Export table to Excel
+        function exportToExcel() {
+            const tables = document.querySelectorAll('table');
+            if (tables.length === 0) {
+                alert('אין טבלאות לייצוא');
+                return;
+            }
+            const table = tables[0];
+            const tbody = table.querySelector('tbody');
+            if (!tbody) {
+                alert('אין נתונים לייצוא');
+                return;
+            }
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                alert('אין נתונים לייצוא');
+                return;
+            }
+            let csvContent = '';
+            const thead = table.querySelector('thead');
+            if (thead) {
+                const headerRows = thead.querySelectorAll('tr');
+                headerRows.forEach(headerRow => {
+                    const headerCells = headerRow.querySelectorAll('th');
+                    const headerData = [];
+                    headerCells.forEach(cell => {
+                        let cellText = cell.textContent.trim();
+                        if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                            cellText = ' ' + cellText;
+                        }
+                        if (cellText.includes(',') || cellText.includes('"')) {
+                            cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                        }
+                        headerData.push(cellText || '');
+                    });
+                    csvContent += headerData.join(',') + '\n';
+                });
+            }
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 0) return;
+                const rowData = [];
+                cells.forEach((cell) => {
+                    let cellText = cell.textContent.trim() || cell.innerText.trim();
+                    if (!cellText) {
+                        rowData.push('""');
+                        return;
+                    }
+                    if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                        cellText = ' ' + cellText;
+                    }
+                    cellText = cellText.replace(/\/(\s*)-/g, '/ -');
+                    cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                    rowData.push(cellText);
+                });
+                csvContent += rowData.join(',') + '\n';
+            });
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            link.setAttribute('download', `ניתוח_גירעון_קלורי_${dateStr}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
+
