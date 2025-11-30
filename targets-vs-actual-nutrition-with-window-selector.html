@@ -375,7 +375,7 @@
                 </div>
                 <div class="target-input">
                     <label>⚡ קלוריות בניכוי צעדים</label>
-                    <input type="number" id="netCaloriesTarget" value="2000" min="0" step="10">
+                    <input type="number" id="netCaloriesTarget" value="2400" min="0" step="10">
                 </div>
                 <div class="target-input">
                     <label>💪 חלבון יעד (גרם)</label>
@@ -426,7 +426,7 @@
         // Default targets
         let TARGETS = {
             calories: 2400,
-            netCalories: 2000,
+            netCalories: 2400,
             protein: 190,
             fat: 67,
             carbs: 259,
@@ -437,7 +437,7 @@
         let weightData = [];
         let windowTdeeMap = {};
         
-        const WINDOWS = [3, 5, 7, 9, 10, 11, 12, 13, 14, 21, 28];
+        const WINDOWS = [1, 2, 3, 5, 7, 9, 10, 11, 12, 13, 14, 21, 28];
         
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -692,7 +692,7 @@
         function updateTargets() {
             TARGETS = {
                 calories: parseInt(document.getElementById('calorieTarget').value) || 2400,
-                netCalories: parseInt(document.getElementById('netCaloriesTarget').value) || 2000,
+                netCalories: parseInt(document.getElementById('netCaloriesTarget').value) || 2400,
                 protein: parseInt(document.getElementById('proteinTarget').value) || 190,
                 fat: parseInt(document.getElementById('fatTarget').value) || 67,
                 carbs: parseInt(document.getElementById('carbsTarget').value) || 259,
