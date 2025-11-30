@@ -129,6 +129,18 @@
             transform: scale(1.05);
         }
         
+        .future-mark {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
         .section-header {
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
@@ -189,14 +201,17 @@
             <div class="status-item">
                 <div class="status-label">חלבון מינימלי</div>
                 <div class="status-value" id="maxProteinGap">--</div>
+                <div class="status-label" style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">יעד: <span id="proteinTarget">190</span> גרם</div>
             </div>
             <div class="status-item">
                 <div class="status-label">שומן מקסימלי</div>
                 <div class="status-value" id="minFatGap">--</div>
+                <div class="status-label" style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">יעד: <span id="fatTarget">67</span> גרם</div>
             </div>
             <div class="status-item">
                 <div class="status-label">פחמימות נטו מקסימום</div>
                 <div class="status-value" id="minCarbsGap">--</div>
+                <div class="status-label" style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">יעד: <span id="carbsTarget">259</span> גרם</div>
             </div>
         </div>
         
@@ -236,7 +251,7 @@
                 <div class="app-icon">🔬</div>
                 <div class="app-title">מחשבון תחזוקה עד היום</div>
                 <div class="app-description">חישוב קלוריות תחזוקה אמיתיות על בסיס שינויי משקל וצריכה</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/real-maintenance-calculator.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/real-maintenance-calculator.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Targets vs Actual Nutrition with Window Selector -->
@@ -252,7 +267,7 @@
                 <div class="app-icon">📈</div>
                 <div class="app-title">סיכום משקל ותזונה - TDEE</div>
                 <div class="app-description">סיכום שינוי משקל, קלוריות, צעדים ו-TDEE עם טבלת סיכום Total Tdee ו-Net Tdee</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-summary-tdee-without-steps.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-summary-tdee-without-steps.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Maintenance Full Windows Table -->
@@ -260,7 +275,7 @@
                 <div class="app-icon">📊</div>
                 <div class="app-title">טבלת תחזוקה - חלונות מלאים</div>
                 <div class="app-description">חישוב תחזוקה אמיתית לחלונות מלאים של 5, 7, 10, 14, 21 ו-28 ימים - עד 5 חלונות לכל גודל</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/maintenance-full-windows-table.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/maintenance-full-windows-table.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
         </div>
         
@@ -280,7 +295,7 @@
                 <div class="app-icon">📉</div>
                 <div class="app-title">ניתוח גירעון קלורי - מזון וצעדים עם יעד</div>
                 <div class="app-description">חישוב גירעון קלורי ממזון ומצעדים בחלונות זמן שונים עם יעד קלורי שבועי ובחירת חלון זמן ל-TDEE</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/calorie-deficit-analysis-with-target.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/calorie-deficit-analysis-with-target.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Macro Comparison Minus One Table -->
@@ -288,7 +303,7 @@
                 <div class="app-icon">📊</div>
                 <div class="app-title">השוואת מקרונוטריינטים - טבלה</div>
                 <div class="app-description">השוואת מקרונוטריינטים בתצוגת טבלה (ללא היום האחרון) עם סיכום ובחירת חלון זמן ל-TDEE</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-comparison-minus-one-table.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-comparison-minus-one-table.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
         </div>
         
@@ -300,7 +315,7 @@
                 <div class="app-icon">📊</div>
                 <div class="app-title">ניתוח מדדי גוף עם בחירת חלון</div>
                 <div class="app-description">השוואת תאריך נבחר לממוצע לפי חלון זמן נבחר (3-14 ימים) עם גרפים וצבעי סטטוס</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/metrics-comparison-with-window-selector.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/metrics-comparison-with-window-selector.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Weight Analysis by Windows -->
@@ -308,7 +323,7 @@
                 <div class="app-icon">📈</div>
                 <div class="app-title">ניתוח משקל לפי חלונות</div>
                 <div class="app-description">ניתוח מגמות משקל עם חלונות זמן לא חופפים לזיהוי דפוסים</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-analysis-by-windows.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-analysis-by-windows.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Nutrition Windows Comparison -->
@@ -328,7 +343,7 @@
                 <div class="app-icon">📋</div>
                 <div class="app-title">טבלת היסטוריית תחזוקה עד היום</div>
                 <div class="app-description">טבלה של 5 חישובי תחזוקה אחרונים לכל חלון זמן עם ממוצעים</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/maintenance-history-table.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/maintenance-history-table.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Macro Calculator -->
@@ -336,7 +351,7 @@
                 <div class="app-icon">🥗</div>
                 <div class="app-title">מחשבון מקרונוטריינטים</div>
                 <div class="app-description">חישוב חלבון, פחמימות ושומן עבור TDEE ויעד קלורי</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-calculator.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-calculator.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Calorie Deficit Analysis with TDEE from Weight -->
@@ -344,7 +359,7 @@
                 <div class="app-icon">📉</div>
                 <div class="app-title">ניתוח גירעון קלורי עם TDEE מחישוב משקל</div>
                 <div class="app-description">ניתוח גירעון קלורי עם TDEE מחושב אוטומטית מנתוני המשקל והתזונה (מינוס יום אחד)</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/calorie-deficit-analysis-with-tdee-from-weight.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/calorie-deficit-analysis-with-tdee-from-weight.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Combined Macro and Calorie Gaps with TDEE -->
@@ -352,7 +367,7 @@
                 <div class="app-icon">📊</div>
                 <div class="app-title">סיכום פערים - מקרונוטריינטים וקלוריות</div>
                 <div class="app-description">סיכום פערים מול יעד למקרונוטריינטים ופערים מול יעד ו-TDEE לקלוריות</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/combined-macro-calorie-gaps-with-tdee.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/combined-macro-calorie-gaps-with-tdee.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Combined Macro and Calorie Gaps Future Preview -->
@@ -360,7 +375,7 @@
                 <div class="app-icon">🔮</div>
                 <div class="app-title">תצוגה מקדימה - סיכום פערים מחר</div>
                 <div class="app-description">הזן ערכים היפותטיים להיום וצפה איך הפערים ייראו מחר עם השוואה לפני ואחרי</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/combined-macro-calorie-gaps-future-preview.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/combined-macro-calorie-gaps-future-preview.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Required Consumption Last Day -->
@@ -368,7 +383,7 @@
                 <div class="app-icon">📋</div>
                 <div class="app-title">צריכה נדרשת ביום האחרון</div>
                 <div class="app-description">חישוב הצריכה הנדרשת ביום האחרון של כל חלון זמן לאיזון היעדים</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/required-consumption-last-day.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/required-consumption-last-day.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
             
             <!-- Export All Data to Excel -->
@@ -376,7 +391,7 @@
                 <div class="app-icon">📥</div>
                 <div class="app-title">ייצוא כל הנתונים ל-Excel</div>
                 <div class="app-description">ייצוא מקיף של כל הנתונים, טבלאות, כרטיסים ומספרים מכל הדפים לקובץ Excel אחד</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/export-all-data-to-excel.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/export-all-data-to-excel.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
         </div>
         
@@ -388,7 +403,7 @@
                 <div class="app-icon">🥗</div>
                 <div class="app-title">השוואת מקרונוטריינטים עם TDEE מחישוב משקל</div>
                 <div class="app-description">השוואת מקרונוטריינטים עם TDEE מחושב אוטומטית מנתוני המשקל והתזונה</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-comparison-with-tdee-from-weight.html" class="app-link" target="_blank">🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/macro-comparison-with-tdee-from-weight.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
             </div>
         </div>
     </div>
@@ -401,10 +416,12 @@
         const WEEKLY_DEFICIT_TARGET = 1050;
         const WINDOWS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
         
-        // Default values for macro calculator (same as macro-comparison-minus-one-table.html)
-        const CALORIE_TARGET = 2250;
-        const PROTEIN_GRAMS = 160;
+        // Default values for macro calculator (same as targets-vs-actual-nutrition-with-window-selector.html)
+        const CALORIE_TARGET = 2400;
+        const PROTEIN_GRAMS = 190;
         const FAT_PERCENT = 25;
+        const FAT_GRAMS = 67; // 25% of 2400 calories = 600 calories / 9 = 67g
+        const CARBS_GRAMS = 259; // Rest of calories after protein (190*4=760) and fat (67*9=603) = 1037 calories / 4 = 259g
         
         // Calculate target gap for a specific window (same logic as calorie-deficit-analysis-with-target-minus-one-table.html)
         function calculateWindowGap(nutritionData, windowDays) {
@@ -606,6 +623,11 @@
                         }
                     });
                     
+                    // Set target values (always visible)
+                    document.getElementById('proteinTarget').textContent = PROTEIN_GRAMS;
+                    document.getElementById('fatTarget').textContent = FAT_GRAMS;
+                    document.getElementById('carbsTarget').textContent = CARBS_GRAMS;
+                    
                     if (allProteinGaps.length > 0) {
                         // Find max protein gap (biggest) and min fat/carbs gaps (lowest)
                         const maxProteinGap = Math.max(...allProteinGaps);
@@ -640,8 +662,16 @@
             }
         }
         
-        // Load statistics when page loads
-        document.addEventListener('DOMContentLoaded', loadStatistics);
+        // Set target values immediately on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set target values (always visible)
+            document.getElementById('proteinTarget').textContent = PROTEIN_GRAMS;
+            document.getElementById('fatTarget').textContent = FAT_GRAMS;
+            document.getElementById('carbsTarget').textContent = CARBS_GRAMS;
+            
+            // Load statistics
+            loadStatistics();
+        });
         
         // Save all tables from all pages
         document.getElementById('saveAllTablesBtn').addEventListener('click', async function() {
