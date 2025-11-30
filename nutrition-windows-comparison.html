@@ -1,0 +1,981 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>השוואת תזונה לפי חלונות זמן</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .export-btn {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .table-title {
+            font-size: 1.8rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 2px solid #764ba2;
+        }
+        
+        td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .window-number {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .date-range {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .change-indicator {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 0.85rem;
+        }
+        
+        .change-indicator.positive {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .change-indicator.negative {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .change-indicator.neutral {
+            color: #666;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: scroll;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+            
+            .chart-wrapper {
+                height: 250px;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍎 השוואת תזונה לפי חלונות זמן</h1>
+            <p>השוואת קלוריות, שומן, פחמימות, חלבון ועוד בין חלונות זמן שונים</p>
+        </div>
+        
+        <div class="content">
+            <button class="export-btn" onclick="exportToExcel()">📥 ייצא ל-Excel</button>
+            
+            <div id="loading" class="loading" style="display: none;">
+                🔄 טוען נתונים ומחשב השוואות...
+            </div>
+            
+            <div id="error" class="error" style="display: none;"></div>
+            
+            <div id="chartsContainer" class="charts-grid" style="display: none;"></div>
+            
+            <div id="tablesContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
+        
+        const windowSizes = [2, 3, 4, 5, 6, 7, 10, 14, 21, 28];
+        let calculatedData = {};
+        
+        // Parse DD/MM/YYYY date format
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        // Format date as DD/MM/YYYY
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Subtract one day from a date
+        function subtractOneDay(dateStr) {
+            const date = parseDate(dateStr);
+            if (!date) return null;
+            date.setDate(date.getDate() - 1);
+            return formatDate(date);
+        }
+        
+        // Calculate mean
+        function calculateMean(values) {
+            if (values.length === 0) return 0;
+            const validValues = values.filter(v => v !== null && v !== undefined && !isNaN(v) && v > 0);
+            if (validValues.length === 0) return 0;
+            return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+        }
+        
+        // Get nutrition data for a date range
+        function getNutritionForWindow(nutritionData, startDate, endDate) {
+            if (!startDate || !endDate) {
+                return {
+                    avgCalories: 0,
+                    totalCalories: 0,
+                    avgFat: 0,
+                    totalFat: 0,
+                    avgCarbs: 0,
+                    totalCarbs: 0,
+                    avgProtein: 0,
+                    totalProtein: 0,
+                    avgFiber: 0,
+                    totalFiber: 0,
+                    avgSteps: 0,
+                    daysCount: 0,
+                    dateRange: '--'
+                };
+            }
+            
+            // Check if first row is header
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            const dataStartIndex = hasHeader ? 1 : 0;
+            
+            const calories = [];
+            const fats = [];
+            const carbs = [];
+            const proteins = [];
+            const fibers = [];
+            const steps = [];
+            
+            const start = parseDate(startDate);
+            const end = parseDate(endDate);
+            
+            if (!start || !end) {
+                return {
+                    avgCalories: 0,
+                    totalCalories: 0,
+                    avgFat: 0,
+                    totalFat: 0,
+                    avgCarbs: 0,
+                    totalCarbs: 0,
+                    avgProtein: 0,
+                    totalProtein: 0,
+                    avgFiber: 0,
+                    totalFiber: 0,
+                    avgSteps: 0,
+                    daysCount: 0,
+                    dateRange: '--'
+                };
+            }
+            
+            for (let i = dataStartIndex; i < nutritionData.length; i++) {
+                const row = nutritionData[i];
+                if (!row || row.length === 0) continue;
+                
+                const rowDate = row[0];
+                if (!rowDate) continue;
+                
+                const date = parseDate(rowDate);
+                if (!date) continue;
+                
+                // Check if date is within range (inclusive)
+                const isInRange = (date >= start && date <= end) || (date >= end && date <= start);
+                
+                if (isInRange) {
+                    const cal = parseFloat(row[1]) || 0; // Calories
+                    const fat = parseFloat(row[2]) || 0; // Fat
+                    const carb = parseFloat(row[3]) || 0; // Carbs
+                    const protein = parseFloat(row[4]) || 0; // Protein
+                    const fiber = parseFloat(row[5]) || 0; // Fiber
+                    const step = parseFloat(row[6]) || 0; // Steps
+                    
+                    if (cal > 0) calories.push(cal);
+                    if (fat > 0) fats.push(fat);
+                    if (carb > 0) carbs.push(carb);
+                    if (protein > 0) proteins.push(protein);
+                    if (fiber > 0) fibers.push(fiber);
+                    if (step > 0) steps.push(step);
+                }
+            }
+            
+            const avgCalories = calculateMean(calories);
+            const totalCalories = calories.reduce((sum, cal) => sum + cal, 0);
+            const avgFat = calculateMean(fats);
+            const totalFat = fats.reduce((sum, f) => sum + f, 0);
+            const avgCarbs = calculateMean(carbs);
+            const totalCarbs = carbs.reduce((sum, c) => sum + c, 0);
+            const avgProtein = calculateMean(proteins);
+            const totalProtein = proteins.reduce((sum, p) => sum + p, 0);
+            const avgFiber = calculateMean(fibers);
+            const totalFiber = fibers.reduce((sum, f) => sum + f, 0);
+            const avgSteps = calculateMean(steps);
+            
+            return {
+                avgCalories: avgCalories,
+                totalCalories: totalCalories,
+                avgFat: avgFat,
+                totalFat: totalFat,
+                avgCarbs: avgCarbs,
+                totalCarbs: totalCarbs,
+                avgProtein: avgProtein,
+                totalProtein: totalProtein,
+                avgFiber: avgFiber,
+                totalFiber: totalFiber,
+                avgSteps: avgSteps,
+                daysCount: Math.max(calories.length, fats.length, carbs.length, proteins.length, fibers.length, steps.length),
+                dateRange: `${startDate} - ${endDate}`
+            };
+        }
+        
+        // Sort data by date ascending
+        function sortDataAsc(data) {
+            return [...data].sort((a, b) => {
+                const dateA = parseDate(a[0]);
+                const dateB = parseDate(b[0]);
+                if (!dateA || !dateB) return 0;
+                return dateA - dateB;
+            });
+        }
+        
+        // Create non-overlapping chunks (full windows)
+        function createChunks(data, windowSize) {
+            const chunks = [];
+            for (let i = 0; i < data.length; i += windowSize) {
+                chunks.push(data.slice(i, i + windowSize));
+            }
+            return chunks;
+        }
+        
+        // Create full, non-overlapping windows from nutrition data
+        function createFullWindows(nutritionData, windowSize) {
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            const dataStartIndex = hasHeader ? 1 : 0;
+            const data = nutritionData.slice(dataStartIndex);
+            
+            // Sort from oldest to newest
+            const sortedData = sortDataAsc(data);
+            
+            // Create non-overlapping chunks
+            const chunks = createChunks(sortedData, windowSize);
+            
+            const windows = [];
+            
+            // Process each chunk (only full windows)
+            chunks.forEach((chunk, index) => {
+                // Only include full windows (exactly windowSize days)
+                if (chunk.length !== windowSize) return;
+                
+                const startDate = chunk[0][0];
+                const endDate = chunk[chunk.length - 1][0];
+                
+                const nutrition = getNutritionForWindow(nutritionData, startDate, endDate);
+                
+                windows.push({
+                    windowNumber: chunks.length - index, // Will be reversed, so last chunk becomes 1
+                    startDate: startDate,
+                    endDate: endDate,
+                    dateRange: `${startDate} - ${endDate}`,
+                    ...nutrition
+                });
+            });
+            
+            // Reverse to show most recent first, and renumber
+            const reversed = windows.reverse();
+            reversed.forEach((window, index) => {
+                window.windowNumber = index + 1; // Most recent is 1
+            });
+            return reversed;
+        }
+        
+        // Load data and calculate on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+        
+        async function loadData() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('tablesContainer').innerHTML = '';
+                
+                // Load nutrition data
+                const nutritionResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=getNutrition`);
+                const nutritionData = await nutritionResponse.json();
+                
+                if (!nutritionData.success) {
+                    showError('שגיאה בטעינת נתונים');
+                    return;
+                }
+                
+                // Calculate windows for each size
+                calculatedData = {};
+                
+                windowSizes.forEach(windowSize => {
+                    const windows = createFullWindows(nutritionData.data, windowSize);
+                    // Get last 5 windows (most recent)
+                    calculatedData[windowSize] = windows.slice(0, 5);
+                });
+                
+                displayTables();
+                displayChart();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('שגיאה בחיבור לשרת: ' + error.message);
+            }
+        }
+        
+        function displayTables() {
+            const container = document.getElementById('tablesContainer');
+            container.innerHTML = '';
+            
+            windowSizes.forEach(windowSize => {
+                const windows = calculatedData[windowSize] || [];
+                
+                if (windows.length === 0) return;
+                
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'table-container';
+                
+                const title = document.createElement('h2');
+                title.className = 'table-title';
+                title.textContent = `📊 חלונות של ${windowSize} ימים - 5 האחרונים`;
+                tableContainer.appendChild(title);
+                
+                const table = document.createElement('table');
+                
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th>חלון</th>
+                        <th>תקופה</th>
+                        <th>קלוריות ממוצעות</th>
+                        <th>קלוריות נטו</th>
+                        <th>שומן ממוצע (גרם)</th>
+                        <th>פחמימות ממוצעות (גרם)</th>
+                        <th>חלבון ממוצע (גרם)</th>
+                        <th>סיבים ממוצעים (גרם)</th>
+                        <th>צעדים ממוצעים</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+                
+                const tbody = document.createElement('tbody');
+                
+                windows.forEach((window, index) => {
+                    // Compare to next window (which is the previous chronological window)
+                    // Since windows are reversed (most recent first), next window is older
+                    const prevWindow = index < windows.length - 1 ? windows[index + 1] : null;
+                    
+                    const row = document.createElement('tr');
+                    
+                    // Window number
+                    const windowNumCell = document.createElement('td');
+                    const windowNumSpan = document.createElement('span');
+                    windowNumSpan.className = 'window-number';
+                    windowNumSpan.textContent = `חלון ${window.windowNumber}`;
+                    windowNumCell.appendChild(windowNumSpan);
+                    row.appendChild(windowNumCell);
+                    
+                    // Date range
+                    const dateCell = document.createElement('td');
+                    dateCell.className = 'date-range';
+                    dateCell.textContent = window.dateRange;
+                    row.appendChild(dateCell);
+                    
+                    // Average calories
+                    const avgCalCell = document.createElement('td');
+                    avgCalCell.textContent = Math.round(window.avgCalories).toLocaleString();
+                    if (prevWindow) {
+                        const change = window.avgCalories - prevWindow.avgCalories;
+                        if (change > 0) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator positive';
+                            changeSpan.textContent = ` ↑+${Math.round(change)}`;
+                            avgCalCell.appendChild(changeSpan);
+                        } else if (change < 0) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator negative';
+                            changeSpan.textContent = ` ↓${Math.round(change)}`;
+                            avgCalCell.appendChild(changeSpan);
+                        } else {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator neutral';
+                            changeSpan.textContent = ' =';
+                            avgCalCell.appendChild(changeSpan);
+                        }
+                    }
+                    row.appendChild(avgCalCell);
+                    
+                    // Net calories (Calories - Steps/25)
+                    const netCalCell = document.createElement('td');
+                    const caloriesFromSteps = window.avgSteps / 25;
+                    const netCalories = window.avgCalories - caloriesFromSteps;
+                    netCalCell.textContent = Math.round(netCalories).toLocaleString();
+                    if (prevWindow) {
+                        const prevCaloriesFromSteps = prevWindow.avgSteps / 25;
+                        const prevNetCalories = prevWindow.avgCalories - prevCaloriesFromSteps;
+                        const change = netCalories - prevNetCalories;
+                        if (change > 0) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator positive';
+                            changeSpan.textContent = ` ↑+${Math.round(change)}`;
+                            netCalCell.appendChild(changeSpan);
+                        } else if (change < 0) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator negative';
+                            changeSpan.textContent = ` ↓${Math.round(change)}`;
+                            netCalCell.appendChild(changeSpan);
+                        } else {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator neutral';
+                            changeSpan.textContent = ' =';
+                            netCalCell.appendChild(changeSpan);
+                        }
+                    }
+                    row.appendChild(netCalCell);
+                    
+                    // Average fat
+                    const avgFatCell = document.createElement('td');
+                    avgFatCell.textContent = Math.round(window.avgFat).toLocaleString();
+                    if (prevWindow) {
+                        const change = window.avgFat - prevWindow.avgFat;
+                        if (change > 0.1) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator positive';
+                            changeSpan.textContent = ` ↑+${Math.round(change)}`;
+                            avgFatCell.appendChild(changeSpan);
+                        } else if (change < -0.1) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator negative';
+                            changeSpan.textContent = ` ↓${Math.round(change)}`;
+                            avgFatCell.appendChild(changeSpan);
+                        } else {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator neutral';
+                            changeSpan.textContent = ' =';
+                            avgFatCell.appendChild(changeSpan);
+                        }
+                    }
+                    row.appendChild(avgFatCell);
+                    
+                    // Average carbs
+                    const avgCarbsCell = document.createElement('td');
+                    avgCarbsCell.textContent = Math.round(window.avgCarbs).toLocaleString();
+                    if (prevWindow) {
+                        const change = window.avgCarbs - prevWindow.avgCarbs;
+                        if (change > 0.1) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator positive';
+                            changeSpan.textContent = ` ↑+${Math.round(change)}`;
+                            avgCarbsCell.appendChild(changeSpan);
+                        } else if (change < -0.1) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator negative';
+                            changeSpan.textContent = ` ↓${Math.round(change)}`;
+                            avgCarbsCell.appendChild(changeSpan);
+                        } else {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator neutral';
+                            changeSpan.textContent = ' =';
+                            avgCarbsCell.appendChild(changeSpan);
+                        }
+                    }
+                    row.appendChild(avgCarbsCell);
+                    
+                    // Average protein (opposite logic: increase = good = green, decrease = bad = red)
+                    const avgProteinCell = document.createElement('td');
+                    avgProteinCell.textContent = Math.round(window.avgProtein).toLocaleString();
+                    if (prevWindow) {
+                        const change = window.avgProtein - prevWindow.avgProtein;
+                        if (change > 0.1) {
+                            // Increase in protein is good, so use green (negative class)
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator negative';
+                            changeSpan.textContent = ` ↑+${Math.round(change)}`;
+                            avgProteinCell.appendChild(changeSpan);
+                        } else if (change < -0.1) {
+                            // Decrease in protein is bad, so use red (positive class)
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator positive';
+                            changeSpan.textContent = ` ↓${Math.round(change)}`;
+                            avgProteinCell.appendChild(changeSpan);
+                        } else {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator neutral';
+                            changeSpan.textContent = ' =';
+                            avgProteinCell.appendChild(changeSpan);
+                        }
+                    }
+                    row.appendChild(avgProteinCell);
+                    
+                    // Average fiber
+                    const avgFiberCell = document.createElement('td');
+                    avgFiberCell.textContent = Math.round(window.avgFiber).toLocaleString();
+                    if (prevWindow) {
+                        const change = window.avgFiber - prevWindow.avgFiber;
+                        if (change > 0.1) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator';
+                            changeSpan.textContent = ` ↑+${Math.round(change)}`;
+                            avgFiberCell.appendChild(changeSpan);
+                        } else if (change < -0.1) {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator';
+                            changeSpan.textContent = ` ↓${Math.round(change)}`;
+                            avgFiberCell.appendChild(changeSpan);
+                        } else {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator';
+                            changeSpan.textContent = ' =';
+                            avgFiberCell.appendChild(changeSpan);
+                        }
+                    }
+                    row.appendChild(avgFiberCell);
+                    
+                    // Average steps (opposite logic: increase = good = green, decrease = bad = red)
+                    const avgStepsCell = document.createElement('td');
+                    avgStepsCell.textContent = Math.round(window.avgSteps).toLocaleString();
+                    if (prevWindow) {
+                        const change = window.avgSteps - prevWindow.avgSteps;
+                        if (change > 1) {
+                            // Increase in steps is good, so use green (negative class)
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator negative';
+                            changeSpan.textContent = ` ↑+${Math.round(change)}`;
+                            avgStepsCell.appendChild(changeSpan);
+                        } else if (change < -1) {
+                            // Decrease in steps is bad, so use red (positive class)
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator positive';
+                            changeSpan.textContent = ` ↓${Math.round(change)}`;
+                            avgStepsCell.appendChild(changeSpan);
+                        } else {
+                            const changeSpan = document.createElement('span');
+                            changeSpan.className = 'change-indicator neutral';
+                            changeSpan.textContent = ' =';
+                            avgStepsCell.appendChild(changeSpan);
+                        }
+                    }
+                    row.appendChild(avgStepsCell);
+                    
+                    tbody.appendChild(row);
+                });
+                
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                container.appendChild(tableContainer);
+            });
+        }
+        
+        let charts = {};
+        
+        function createChartForWindowSize(windowSize, containerId) {
+            const windows = calculatedData[windowSize] || [];
+            
+            if (windows.length === 0) {
+                return;
+            }
+            
+            // Prepare data: all windows for this window size
+            // Use end date from dateRange (format: "DD/MM/YYYY - DD/MM/YYYY")
+            const labels = windows.map(w => {
+                const dateRange = w.dateRange || '';
+                // Extract end date (after the dash)
+                const parts = dateRange.split(' - ');
+                if (parts.length === 2) {
+                    return parts[1]; // Return end date
+                }
+                return dateRange; // Fallback to full range if format is different
+            });
+            const calories = windows.map(w => Math.round(w.avgCalories));
+            
+            const ctx = document.getElementById(containerId).getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (charts[windowSize]) {
+                charts[windowSize].destroy();
+            }
+            
+            charts[windowSize] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'קלוריות ממוצעות',
+                        data: calories,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#764ba2',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 10,
+                            titleFont: {
+                                size: 13
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'קלוריות: ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'קלוריות',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'חלון',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function displayChart() {
+            const chartsContainer = document.getElementById('chartsContainer');
+            chartsContainer.innerHTML = '';
+            
+            const chartSizes = [4, 7, 14, 21];
+            let hasData = false;
+            
+            chartSizes.forEach(windowSize => {
+                const windows = calculatedData[windowSize] || [];
+                if (windows.length > 0) {
+                    hasData = true;
+                    
+                    const chartContainer = document.createElement('div');
+                    chartContainer.className = 'chart-container';
+                    
+                    const title = document.createElement('h3');
+                    title.className = 'chart-title';
+                    title.textContent = `📊 חלון ${windowSize} ימים`;
+                    chartContainer.appendChild(title);
+                    
+                    const chartWrapper = document.createElement('div');
+                    chartWrapper.className = 'chart-wrapper';
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.id = `chart_${windowSize}`;
+                    chartWrapper.appendChild(canvas);
+                    
+                    chartContainer.appendChild(chartWrapper);
+                    chartsContainer.appendChild(chartContainer);
+                    
+                    // Create chart after DOM is updated
+                    setTimeout(() => {
+                        createChartForWindowSize(windowSize, `chart_${windowSize}`);
+                    }, 100);
+                }
+            });
+            
+            if (hasData) {
+                chartsContainer.style.display = 'grid';
+            } else {
+                chartsContainer.style.display = 'none';
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function escapeCSVCell(value) {
+            if (value === null || value === undefined) return '';
+            const str = String(value);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+        
+        function exportToExcel() {
+            let csvContent = '';
+            
+            windowSizes.forEach(windowSize => {
+                const windows = calculatedData[windowSize] || [];
+                
+                if (windows.length === 0) return;
+                
+                csvContent += `\n=== חלונות של ${windowSize} ימים ===\n`;
+                csvContent += 'חלון,תקופה,קלוריות ממוצעות,קלוריות נטו,שומן ממוצע (גרם),פחמימות ממוצעות (גרם),חלבון ממוצע (גרם),סיבים ממוצעים (גרם),צעדים ממוצעים\n';
+                
+                windows.forEach((window, index) => {
+                    const prevWindow = index < windows.length - 1 ? windows[index + 1] : null;
+                    const calChange = prevWindow ? (window.avgCalories - prevWindow.avgCalories) : 0;
+                    const caloriesFromSteps = window.avgSteps / 25;
+                    const netCalories = window.avgCalories - caloriesFromSteps;
+                    const prevCaloriesFromSteps = prevWindow ? (prevWindow.avgSteps / 25) : 0;
+                    const prevNetCalories = prevWindow ? (prevWindow.avgCalories - prevCaloriesFromSteps) : 0;
+                    const netCalChange = prevWindow ? (netCalories - prevNetCalories) : 0;
+                    const fatChange = prevWindow ? (window.avgFat - prevWindow.avgFat) : 0;
+                    const carbChange = prevWindow ? (window.avgCarbs - prevWindow.avgCarbs) : 0;
+                    const proteinChange = prevWindow ? (window.avgProtein - prevWindow.avgProtein) : 0;
+                    const fiberChange = prevWindow ? (window.avgFiber - prevWindow.avgFiber) : 0;
+                    const stepsChange = prevWindow ? (window.avgSteps - prevWindow.avgSteps) : 0;
+                    
+                    csvContent += `${escapeCSVCell(window.windowNumber)},${escapeCSVCell(window.dateRange)},${escapeCSVCell(Math.round(window.avgCalories))}${calChange !== 0 ? (calChange > 0 ? ' ↑+' : ' ↓') + Math.round(calChange) : ''},${escapeCSVCell(Math.round(netCalories))}${netCalChange !== 0 ? (netCalChange > 0 ? ' ↑+' : ' ↓') + Math.round(netCalChange) : ''},${escapeCSVCell(Math.round(window.avgFat))}${fatChange !== 0 ? (fatChange > 0 ? ' ↑+' : ' ↓') + Math.round(fatChange) : ''},${escapeCSVCell(Math.round(window.avgCarbs))}${carbChange !== 0 ? (carbChange > 0 ? ' ↑+' : ' ↓') + Math.round(carbChange) : ''},${escapeCSVCell(Math.round(window.avgProtein))}${proteinChange !== 0 ? (proteinChange > 0 ? ' ↑+' : ' ↓') + Math.round(proteinChange) : ''},${escapeCSVCell(Math.round(window.avgFiber))}${fiberChange !== 0 ? (fiberChange > 0 ? ' ↑+' : ' ↓') + Math.round(fiberChange) : ''},${escapeCSVCell(Math.round(window.avgSteps))}${stepsChange !== 0 ? (stepsChange > 0 ? ' ↑+' : ' ↓') + Math.round(stepsChange) : ''}\n`;
+                });
+                
+                csvContent += '\n';
+            });
+            
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            link.setAttribute('download', `השוואת_תזונה_לפי_חלונות_${dateStr}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
