@@ -347,7 +347,7 @@
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
         
         // Default TDEE and weekly deficit target
-        let TDEE = 2034;
+        let TDEE = 2400;
         let WEEKLY_DEFICIT_TARGET = 0;
         
         let nutritionData = [];
@@ -623,6 +623,8 @@
         
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Set initial calorie target to 2400
+            updateCalorieTarget();
             loadData();
         });
         
