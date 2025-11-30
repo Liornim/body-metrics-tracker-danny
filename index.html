@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תיעוד מדדי גוף</title>
+    <style>
+        /* תמיכה במובייל */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 4px;
+                white-space: nowrap;
+            }
+            .form-group {
+                margin-bottom: 10px;
+            }
+            input, button {
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 5px;
+            }
+            button {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>תיעוד מדדי גוף</h1>
+    <p>תעד את המשקל, השריר, השומן והנוזלים שלך</p>
+    
+    <form id="bodyMetricsForm">
+        <div>
+            <label for="date">תאריך:</label>
+            <input type="date" id="date" required>
+        </div>
+        
+        <div>
+            <label for="weight">משקל (ק״ג):</label>
+            <input type="number" id="weight" step="0.1" min="0" required>
+        </div>
+        
+        <div>
+            <label for="muscle">שריר (ק״ג):</label>
+            <input type="number" id="muscle" step="0.1" min="0" required>
+        </div>
+        
+        <div>
+            <label for="fat">שומן (ק״ג):</label>
+            <input type="number" id="fat" step="0.1" min="0" required>
+        </div>
+        
+        <div>
+            <label for="fluids">נוזלים (ק״ג):</label>
+            <input type="number" id="fluids" step="0.1" min="0" required>
+        </div>
+        
+        <button type="submit">הוסף מדד</button>
+    </form>
+    
+    <div style="margin: 20px 0;">
+        <button onclick="resetToInitialData()" style="background-color: #ff6b6b; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+            איפוס לנתונים הראשוניים
+        </button>
+        <button onclick="exportToExcel()" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+            ייצוא לאקסל
+        </button>
+    </div>
+
+    <h2>היסטוריית מדדים</h2>
+    <div style="overflow-x: auto;">
+        <table id="metricsTable" style="border-collapse: collapse; border: 2px solid #333; min-width: 100%;">
+            <thead id="metricsTableHead">
+            </thead>
+            <tbody id="metricsTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // גרסה מעודכנת - 2025-01-08 עם Google Sheets
+        const GOOGLE_SHEET_ID = 'Body Metrics Tracker'; // תצטרך להחליף את זה
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
+        
+        // No initial data - all data comes from Google Sheets
+        let metrics = [];
+        // Clear localStorage to force loading from Google Sheets
+        localStorage.removeItem("bodyMetrics");
+        
+        document.getElementById("bodyMetricsForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            // Convert date from YYYY-MM-DD to DD/MM/YYYY
+            const inputDate = document.getElementById("date").value;
+            const dateObj = new Date(inputDate);
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
+            
+            const newMetric = {
+                id: Date.now(),
+                date: formattedDate,
+                weight: parseFloat(document.getElementById("weight").value),
+                muscle: parseFloat(document.getElementById("muscle").value),
+                fat: parseFloat(document.getElementById("fat").value),
+                fluids: parseFloat(document.getElementById("fluids").value)
+            };
+            
+            metrics.push(newMetric);
+            localStorage.setItem("bodyMetrics", JSON.stringify(metrics));
+            
+            // שמירה ב-Google Sheets
+            saveToGoogleSheets(newMetric);
+            
+            // עדכון הטבלה
+            displayMetrics();
+            document.getElementById("bodyMetricsForm").reset();
+            
+            // הודעה למשתמש
+            alert("הנתון נוסף בהצלחה!");
+        });
+        
+        function displayMetrics() {
+            console.log("מעדכן טבלה עם", metrics.length, "נתונים");
+            const thead = document.getElementById("metricsTableHead");
+            const tbody = document.getElementById("metricsTableBody");
+            thead.innerHTML = "";
+            tbody.innerHTML = "";
+            
+            // Convert DD/MM/YYYY to Date object for comparison
+            const parseDate = (dateStr) => {
+                if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
+                    return new Date(year, month - 1, day);
+                }
+                return new Date(dateStr);
+            };
+            
+            // מיון לפי תאריך (החדש ביותר ראשון)
+            metrics.sort((a, b) => parseDate(b.date) - parseDate(a.date));
+            
+            // יצירת כותרות (תאריכים)
+            const headerRow = thead.insertRow();
+            headerRow.innerHTML = '<th style="border: 1px solid #333; padding: 8px; background-color: #f0f0f0;">מדד</th>';
+            
+            // הוספת עמודת ממוצע פערים
+            const avgHeader = document.createElement('th');
+            avgHeader.textContent = 'ממוצע פערים';
+            avgHeader.style.cssText = 'border: 1px solid #333; padding: 8px; background-color: #e0e0e0; writing-mode: vertical-rl; text-orientation: mixed;';
+            headerRow.appendChild(avgHeader);
+            
+            metrics.forEach(metric => {
+                const th = document.createElement('th');
+                th.textContent = metric.date;
+                th.style.cssText = 'border: 1px solid #333; padding: 8px; background-color: #f0f0f0; writing-mode: vertical-rl; text-orientation: mixed;';
+                headerRow.appendChild(th);
+            });
+            
+            // יצירת שורות מדדים
+            const metricsData = [
+                { name: 'משקל (ק״ג)', getValue: (m) => m.weight.toFixed(2) },
+                { name: 'ממוצע משקל', getValue: (m) => calculateAveragesUntilDate(m.date).weight.toFixed(2) },
+                { name: 'פער משקל', getValue: (m) => (m.weight - calculateAveragesUntilDate(m.date).weight).toFixed(2) },
+                { name: 'שריר (ק״ג)', getValue: (m) => m.muscle.toFixed(2) },
+                { name: 'ממוצע שריר', getValue: (m) => calculateAveragesUntilDate(m.date).muscle.toFixed(2) },
+                { name: 'פער שריר', getValue: (m) => (m.muscle - calculateAveragesUntilDate(m.date).muscle).toFixed(2) },
+                { name: 'שומן (ק״ג)', getValue: (m) => m.fat.toFixed(2) },
+                { name: 'ממוצע שומן', getValue: (m) => calculateAveragesUntilDate(m.date).fat.toFixed(2) },
+                { name: 'פער שומן', getValue: (m) => (m.fat - calculateAveragesUntilDate(m.date).fat).toFixed(2) },
+                { name: 'נוזלים (ק״ג)', getValue: (m) => m.fluids.toFixed(2) },
+                { name: 'ממוצע נוזלים', getValue: (m) => calculateAveragesUntilDate(m.date).fluids.toFixed(2) },
+                { name: 'פער נוזלים', getValue: (m) => (m.fluids - calculateAveragesUntilDate(m.date).fluids).toFixed(2) }
+            ];
+            
+            metricsData.forEach(metricData => {
+                const row = tbody.insertRow();
+                const labelCell = row.insertCell();
+                labelCell.textContent = metricData.name;
+                labelCell.style.cssText = 'border: 1px solid #333; padding: 8px; background-color: #f8f8f8; font-weight: bold;';
+                
+                // חישוב ממוצע פערים (רק עבור שורות פער)
+                let avgCell = null;
+                if (metricData.name.includes('פער')) {
+                    avgCell = row.insertCell();
+                    const avgValue = calculateAverageDifference(metricData.name);
+                    avgCell.textContent = avgValue.toFixed(2);
+                    avgCell.style.cssText = 'border: 1px solid #333; padding: 8px; text-align: center; background-color: #e8f4f8; font-weight: bold;';
+                } else {
+                    avgCell = row.insertCell();
+                    avgCell.textContent = '-';
+                    avgCell.style.cssText = 'border: 1px solid #333; padding: 8px; text-align: center; background-color: #f5f5f5;';
+                }
+                
+                metrics.forEach(metric => {
+                    const cell = row.insertCell();
+                    cell.textContent = metricData.getValue(metric);
+                    cell.style.cssText = 'border: 1px solid #333; padding: 8px; text-align: center;';
+                });
+            });
+        }
+        
+        function calculateAveragesUntilDate(currentDate) {
+            // Convert DD/MM/YYYY to Date object for comparison
+            const parseDate = (dateStr) => {
+                if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
+                    return new Date(year, month - 1, day);
+                }
+                return new Date(dateStr);
+            };
+            
+            const currentDateObj = parseDate(currentDate);
+            
+            // מצא את כל הנתונים עד לתאריך הנוכחי (לא כולל)
+            const dataUntilDate = metrics.filter(metric => 
+                parseDate(metric.date) < currentDateObj
+            );
+            
+            if (dataUntilDate.length === 0) {
+                return { weight: 0, muscle: 0, fat: 0, fluids: 0 };
+            }
+            
+            // חישוב ממוצעים
+            const sum = dataUntilDate.reduce((acc, metric) => ({
+                weight: acc.weight + metric.weight,
+                muscle: acc.muscle + metric.muscle,
+                fat: acc.fat + metric.fat,
+                fluids: acc.fluids + metric.fluids
+            }), { weight: 0, muscle: 0, fat: 0, fluids: 0 });
+            
+            return {
+                weight: sum.weight / dataUntilDate.length,
+                muscle: sum.muscle / dataUntilDate.length,
+                fat: sum.fat / dataUntilDate.length,
+                fluids: sum.fluids / dataUntilDate.length
+            };
+        }
+        
+        function calculateAverageDifference(differenceType) {
+            let totalDifference = 0;
+            let count = 0;
+            
+            // Convert DD/MM/YYYY to Date object for comparison
+            const parseDate = (dateStr) => {
+                if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
+                    return new Date(year, month - 1, day);
+                }
+                return new Date(dateStr);
+            };
+            
+            // מיון לפי תאריך (הישן ביותר ראשון)
+            const sortedMetrics = [...metrics].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            
+            // עבור כל תאריך (מהשני ואילך)
+            for (let i = 1; i < sortedMetrics.length; i++) {
+                const metric = sortedMetrics[i];
+                
+                // חשב ממוצע של כל הנתונים הקודמים (לא כולל התאריך הנוכחי)
+                const previousMetrics = sortedMetrics.slice(0, i);
+                if (previousMetrics.length > 0) {
+                    let average = 0;
+                    let difference = 0;
+                    
+                    if (differenceType === 'פער משקל') {
+                        average = previousMetrics.reduce((sum, m) => sum + m.weight, 0) / previousMetrics.length;
+                        difference = metric.weight - average;
+                    } else if (differenceType === 'פער שריר') {
+                        average = previousMetrics.reduce((sum, m) => sum + m.muscle, 0) / previousMetrics.length;
+                        difference = metric.muscle - average;
+                    } else if (differenceType === 'פער שומן') {
+                        average = previousMetrics.reduce((sum, m) => sum + m.fat, 0) / previousMetrics.length;
+                        difference = metric.fat - average;
+                    } else if (differenceType === 'פער נוזלים') {
+                        average = previousMetrics.reduce((sum, m) => sum + m.fluids, 0) / previousMetrics.length;
+                        difference = metric.fluids - average;
+                    }
+                    
+                    totalDifference += difference;
+                    count++;
+                }
+            }
+            
+            return count > 0 ? totalDifference / count : 0;
+        }
+        
+        function deleteMetric(id) {
+            metrics = metrics.filter(metric => metric.id !== id);
+            localStorage.setItem("bodyMetrics", JSON.stringify(metrics));
+            displayMetrics();
+        }
+        
+        function resetToInitialData() {
+            if (confirm("האם אתה בטוח שברצונך לאפס את כל הנתונים?")) {
+                metrics = [];
+                localStorage.removeItem("bodyMetrics");
+                displayMetrics();
+                alert("הנתונים אופסו בהצלחה!");
+            }
+        }
+        
+        // פונקציות Google Sheets
+        function saveToGoogleSheets(metric) {
+            try {
+                console.log('שולח נתון ל-Google Sheets:', metric);
+                // שימוש ב-JSONP במקום fetch כדי לעקוף CORS
+                const script = document.createElement('script');
+                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                
+                window[callbackName] = function(data) {
+                    console.log('נתון נשמר ב-Google Sheets בהצלחה');
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                };
+                
+                const url = `${GOOGLE_SCRIPT_URL}?action=add&date=${metric.date}&weight=${metric.weight}&muscle=${metric.muscle}&fat=${metric.fat}&fluids=${metric.fluids}&callback=${callbackName}`;
+                console.log('שולח ל-URL:', url);
+                script.src = url;
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('שגיאה בחיבור ל-Google Sheets:', error);
+            }
+        }
+        
+        async function loadFromGoogleSheets() {
+            try {
+                console.log('טוען נתונים מ-Google Sheets...');
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=get`);
+                const data = await response.json();
+                
+                console.log('תגובה מ-Google Sheets:', data);
+                
+                if (data.success && data.data) {
+                    // המר את הנתונים מהפורמט של Google Sheets
+                    const sheetData = data.data.map((row, index) => {
+                        // Convert date to DD/MM/YYYY format
+                        let dateStr = row[0];
+                        if (dateStr && dateStr.includes('T')) {
+                            // If it's a full timestamp, extract just the date part
+                            const date = new Date(dateStr);
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const year = date.getFullYear();
+                            dateStr = `${day}/${month}/${year}`;
+                        }
+                        
+                        return {
+                            id: Date.now() + index, // יצירת ID ייחודי
+                            date: dateStr,
+                            weight: parseFloat(row[1]),
+                            muscle: parseFloat(row[2]),
+                            fat: parseFloat(row[3]),
+                            fluids: parseFloat(row[4])
+                        };
+                    });
+                    
+                    console.log('נתונים נטענו מ-Google Sheets:', sheetData.length, 'נתונים');
+                    metrics = sheetData;
+                    localStorage.setItem("bodyMetrics", JSON.stringify(metrics));
+                    displayMetrics();
+                } else {
+                    console.log('אין נתונים ב-Google Sheets או שגיאה:', data);
+                    metrics = [];
+                    displayMetrics();
+                }
+            } catch (error) {
+                console.error('שגיאה בטעינה מ-Google Sheets:', error);
+                metrics = [];
+                displayMetrics();
+            }
+        }
+        
+        function exportToExcel() {
+            console.log("מייצא לאקסל", metrics.length, "נתונים");
+            // Convert DD/MM/YYYY to Date object for comparison
+            const parseDate = (dateStr) => {
+                if (dateStr.includes('/')) {
+                    const [day, month, year] = dateStr.split('/');
+                    return new Date(year, month - 1, day);
+                }
+                return new Date(dateStr);
+            };
+            
+            // מיון לפי תאריך (החדש ביותר ראשון)
+            const sortedMetrics = [...metrics].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+            
+            // יצירת כותרות - תאריכים בעמודות
+            let csvContent = "Metric";
+            
+            // הוספת עמודת ממוצע פערים
+            csvContent += ",Average Differences";
+            
+            // הוספת תאריכים
+            sortedMetrics.forEach(metric => {
+                csvContent += `,${metric.date}`;
+            });
+            csvContent += "\n";
+            
+            // יצירת שורות מדדים
+            const metricsData = [
+                { name: 'Weight (kg)', getValue: (m) => m.weight.toFixed(2) },
+                { name: 'Weight Average', getValue: (m) => calculateAveragesUntilDate(m.date).weight.toFixed(2) },
+                { name: 'Weight Difference', getValue: (m) => (m.weight - calculateAveragesUntilDate(m.date).weight).toFixed(2) },
+                { name: 'Muscle (kg)', getValue: (m) => m.muscle.toFixed(2) },
+                { name: 'Muscle Average', getValue: (m) => calculateAveragesUntilDate(m.date).muscle.toFixed(2) },
+                { name: 'Muscle Difference', getValue: (m) => (m.muscle - calculateAveragesUntilDate(m.date).muscle).toFixed(2) },
+                { name: 'Fat (kg)', getValue: (m) => m.fat.toFixed(2) },
+                { name: 'Fat Average', getValue: (m) => calculateAveragesUntilDate(m.date).fat.toFixed(2) },
+                { name: 'Fat Difference', getValue: (m) => (m.fat - calculateAveragesUntilDate(m.date).fat).toFixed(2) },
+                { name: 'Fluids (kg)', getValue: (m) => m.fluids.toFixed(2) },
+                { name: 'Fluids Average', getValue: (m) => calculateAveragesUntilDate(m.date).fluids.toFixed(2) },
+                { name: 'Fluids Difference', getValue: (m) => (m.fluids - calculateAveragesUntilDate(m.date).fluids).toFixed(2) }
+            ];
+            
+            metricsData.forEach(metricData => {
+                csvContent += metricData.name;
+                
+                // הוספת ממוצע פערים
+                if (metricData.name.includes('Difference')) {
+                    let differenceType = '';
+                    if (metricData.name.includes('Weight')) {
+                        differenceType = 'פער משקל';
+                    } else if (metricData.name.includes('Muscle')) {
+                        differenceType = 'פער שריר';
+                    } else if (metricData.name.includes('Fat')) {
+                        differenceType = 'פער שומן';
+                    } else if (metricData.name.includes('Fluids')) {
+                        differenceType = 'פער נוזלים';
+                    }
+                    const avgDiff = calculateAverageDifference(differenceType);
+                    csvContent += `,${avgDiff.toFixed(2)}`;
+                } else {
+                    csvContent += `,`;
+                }
+                
+                // הוספת נתונים לכל תאריך
+                sortedMetrics.forEach(metric => {
+                    csvContent += `,${metricData.getValue(metric)}`;
+                });
+                csvContent += "\n";
+            });
+            
+            // יצירת קובץ והורדה עם BOM לתמיכה בעברית
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Body_Metrics_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // טעינה מ-Google Sheets בהתחלה
+        loadFromGoogleSheets();
+        
+        displayMetrics();
+    </script>
+</body>
+</html>
+
