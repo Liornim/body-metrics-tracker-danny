@@ -363,31 +363,31 @@
                 </div>
                 <div class="target-input">
                     <label>⚖️ גירעון שבועי בגרמים</label>
-                    <input type="number" id="gramsDeficit" value="0" min="0" step="10" placeholder="לדוגמה: 150">
+                    <input type="number" id="gramsDeficit" value="0" min="0" step="10" placeholder="לדוגמה: 150" onchange="fillDefaultsFromWindow()" oninput="fillDefaultsFromWindow()">
                 </div>
                 <div class="target-input">
                     <label>💪 חלבון (גרם)</label>
-                    <input type="number" id="proteinValue" value="190" min="0" step="5">
+                    <input type="number" id="proteinValue" value="190" min="0" step="5" onchange="fillDefaultsFromWindow()">
                 </div>
                 <div class="target-input">
                     <label>🎯 יעד קלוריות</label>
-                    <input type="number" id="calorieTarget" value="2400" min="0" step="10">
+                    <input type="number" id="calorieTarget" value="2400" min="0" step="10" onchange="recalculateMacros()">
                 </div>
                 <div class="target-input">
                     <label>⚡ קלוריות בניכוי צעדים</label>
-                    <input type="number" id="netCaloriesTarget" value="2400" min="0" step="10">
+                    <input type="number" id="netCaloriesTarget" value="2400" min="0" step="10" onchange="syncCalorieTargets()">
                 </div>
                 <div class="target-input">
                     <label>💪 חלבון יעד (גרם)</label>
-                    <input type="number" id="proteinTarget" value="190" min="0" step="1">
+                    <input type="number" id="proteinTarget" value="190" min="0" step="1" onchange="recalculateCaloriesFromMacros()">
                 </div>
                 <div class="target-input">
                     <label>🥑 שומן יעד (גרם)</label>
-                    <input type="number" id="fatTarget" value="67" min="0" step="1">
+                    <input type="number" id="fatTarget" value="67" min="0" step="1" onchange="recalculateCaloriesFromMacros()">
                 </div>
                 <div class="target-input">
                     <label>🍞 פחמימות יעד (גרם)</label>
-                    <input type="number" id="carbsTarget" value="259" min="0" step="1">
+                    <input type="number" id="carbsTarget" value="259" min="0" step="1" onchange="recalculateCaloriesFromMacros()">
                 </div>
             </div>
             
@@ -441,6 +441,10 @@
         
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Set default values to 2400 on page load
+            document.getElementById('calorieTarget').value = 2400;
+            document.getElementById('netCaloriesTarget').value = 2400;
+            recalculateMacros();
             loadData();
         });
         
@@ -621,21 +625,8 @@
                 select.appendChild(option);
             });
             
-            // Set default to 28 days if available, otherwise 14, otherwise first available
-            if (windowTdeeMap[28] !== undefined) {
-                select.value = '28';
-                fillDefaultsFromWindow();
-            } else if (windowTdeeMap[14] !== undefined) {
-                select.value = '14';
-                fillDefaultsFromWindow();
-            } else if (sortedWindows.length > 0) {
-                // If 28 and 14 are not available, use the first available window with TDEE
-                const firstAvailableWindow = sortedWindows.find(w => windowTdeeMap[w] !== undefined);
-                if (firstAvailableWindow) {
-                    select.value = firstAvailableWindow.toString();
-                    fillDefaultsFromWindow();
-                }
-            }
+            // Don't automatically select a window - let user choose manually
+            // Default remains "בחר חלון..." and defaults stay at 2400
         }
         
         // Calculate macros from calories
@@ -649,43 +640,95 @@
             return { protein: proteinGrams, fat: fatGrams, carbs: carbGrams };
         }
         
-        // Fill defaults from selected window
-        function fillDefaultsFromWindow() {
-            const selectedWindow = parseInt(document.getElementById('windowSelect').value);
-            if (!selectedWindow || !windowTdeeMap[selectedWindow]) {
-                return;
-            }
-            
-            const selectedTdee = windowTdeeMap[selectedWindow];
-            const gramsDeficit = parseFloat(document.getElementById('gramsDeficit').value) || 0;
+        // Sync calorie targets when netCaloriesTarget changes
+        function syncCalorieTargets() {
+            const netCalories = parseFloat(document.getElementById('netCaloriesTarget').value) || 2400;
+            document.getElementById('calorieTarget').value = Math.round(netCalories);
+            recalculateMacros();
+        }
+        
+        // Recalculate macros based on current calorie target
+        function recalculateMacros() {
+            const calorieTarget = parseFloat(document.getElementById('calorieTarget').value) || 2400;
             const proteinGrams = parseFloat(document.getElementById('proteinValue').value) || 190;
             
-            // Calculate daily deficit from grams: weekly calorie deficit = grams * 7, daily = grams
-            const dailyDeficit = gramsDeficit;
+            // Sync netCaloriesTarget with calorieTarget
+            document.getElementById('netCaloriesTarget').value = Math.round(calorieTarget);
             
-            // יעד קלוריות = TDEE - daily deficit
-            const calorieTarget = selectedTdee - dailyDeficit;
-            
-            // Fat = 25% of TDEE (not calorie target)
-            const fatCalories = selectedTdee * 0.25;
+            // Fat = 25% of calorie target
+            const fatCalories = calorieTarget * 0.25;
             const fatGrams = fatCalories / 9;
             
-            // Protein = 190g (fixed)
+            // Protein = from input
             const proteinCalories = proteinGrams * 4;
             
-            // Carbs = remaining calories (from calorie target, not TDEE)
+            // Carbs = remaining calories
             const remainingCalories = calorieTarget - proteinCalories - fatCalories;
             const carbsGrams = remainingCalories / 4;
             
-            // Fill the input fields
-            document.getElementById('calorieTarget').value = Math.round(calorieTarget);
-            document.getElementById('netCaloriesTarget').value = Math.round(selectedTdee);
+            // Update macro fields
             document.getElementById('proteinTarget').value = Math.round(proteinGrams);
             document.getElementById('fatTarget').value = Math.round(fatGrams);
             document.getElementById('carbsTarget').value = Math.round(carbsGrams);
             
             // Update targets
             updateTargets();
+        }
+        
+        // Recalculate calories from macros (when user manually changes macro targets)
+        function recalculateCaloriesFromMacros() {
+            const proteinGrams = parseFloat(document.getElementById('proteinTarget').value) || 190;
+            const fatGrams = parseFloat(document.getElementById('fatTarget').value) || 67;
+            const carbsGrams = parseFloat(document.getElementById('carbsTarget').value) || 259;
+            
+            // Calculate total calories from macros
+            const proteinCalories = proteinGrams * 4;
+            const fatCalories = fatGrams * 9;
+            const carbsCalories = carbsGrams * 4;
+            const totalCalories = proteinCalories + fatCalories + carbsCalories;
+            
+            // Update calorie targets
+            document.getElementById('calorieTarget').value = Math.round(totalCalories);
+            document.getElementById('netCaloriesTarget').value = Math.round(totalCalories);
+            
+            // Update proteinValue to match proteinTarget
+            document.getElementById('proteinValue').value = Math.round(proteinGrams);
+            
+            // Update targets
+            updateTargets();
+        }
+        
+        // Fill defaults from selected window
+        function fillDefaultsFromWindow() {
+            const selectedWindow = parseInt(document.getElementById('windowSelect').value);
+            const gramsDeficit = parseFloat(document.getElementById('gramsDeficit').value) || 0;
+            
+            if (!selectedWindow || !windowTdeeMap[selectedWindow]) {
+                // If no window selected, always use base 2400 (gramsDeficit only applies when window is selected)
+                document.getElementById('calorieTarget').value = 2400;
+                document.getElementById('netCaloriesTarget').value = 2400;
+                recalculateMacros();
+                return;
+            }
+            
+            const selectedTdee = windowTdeeMap[selectedWindow];
+            const proteinGrams = parseFloat(document.getElementById('proteinValue').value) || 190;
+            
+            // Convert weekly grams deficit to daily calorie deficit
+            // 1 kg = 1000g = 7700 calories, so 1g = 7.7 calories
+            // Weekly grams deficit → weekly calorie deficit: gramsDeficit * 7.7
+            // Daily calorie deficit: (gramsDeficit * 7.7) / 7 = gramsDeficit * 1.1
+            const dailyDeficit = gramsDeficit * 1.1;
+            
+            // יעד קלוריות = TDEE - daily deficit
+            const calorieTarget = selectedTdee - dailyDeficit;
+            
+            // Update calorie targets based on selected window and grams deficit
+            document.getElementById('calorieTarget').value = Math.round(calorieTarget);
+            document.getElementById('netCaloriesTarget').value = Math.round(calorieTarget);
+            
+            // Recalculate macros based on the new calorie target
+            recalculateMacros();
         }
         
         // Update targets from form inputs
@@ -763,6 +806,14 @@
                 
                 // Populate window dropdown
                 populateWindowDropdown();
+                
+                // Ensure defaults are 2400 if no window is selected
+                const selectedWindow = parseInt(document.getElementById('windowSelect').value);
+                if (!selectedWindow || !windowTdeeMap[selectedWindow]) {
+                    document.getElementById('calorieTarget').value = 2400;
+                    document.getElementById('netCaloriesTarget').value = 2400;
+                    recalculateMacros();
+                }
                 
                 displayData();
                 loading.style.display = 'none';
