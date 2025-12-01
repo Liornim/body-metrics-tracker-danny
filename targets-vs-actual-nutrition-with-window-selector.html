@@ -441,7 +441,7 @@
         
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Set default values to 2400 on page load
+            // Set default values to 2400 on page load (before data is loaded)
             document.getElementById('calorieTarget').value = 2400;
             document.getElementById('netCaloriesTarget').value = 2400;
             recalculateMacros();
@@ -652,8 +652,7 @@
             const calorieTarget = parseFloat(document.getElementById('calorieTarget').value) || 2400;
             const proteinGrams = parseFloat(document.getElementById('proteinValue').value) || 190;
             
-            // Sync netCaloriesTarget with calorieTarget
-            document.getElementById('netCaloriesTarget').value = Math.round(calorieTarget);
+            // Note: netCaloriesTarget is NOT updated here - it stays unchanged when grams deficit is entered
             
             // Fat = 25% of calorie target
             const fatCalories = calorieTarget * 0.25;
@@ -703,29 +702,29 @@
             const selectedWindow = parseInt(document.getElementById('windowSelect').value);
             const gramsDeficit = parseFloat(document.getElementById('gramsDeficit').value) || 0;
             
-            if (!selectedWindow || !windowTdeeMap[selectedWindow]) {
-                // If no window selected, always use base 2400 (gramsDeficit only applies when window is selected)
-                document.getElementById('calorieTarget').value = 2400;
-                document.getElementById('netCaloriesTarget').value = 2400;
-                recalculateMacros();
-                return;
-            }
-            
-            const selectedTdee = windowTdeeMap[selectedWindow];
-            const proteinGrams = parseFloat(document.getElementById('proteinValue').value) || 190;
-            
             // Convert weekly grams deficit to daily calorie deficit
             // 1 kg = 1000g = 7700 calories, so 1g = 7.7 calories
             // Weekly grams deficit → weekly calorie deficit: gramsDeficit * 7.7
             // Daily calorie deficit: (gramsDeficit * 7.7) / 7 = gramsDeficit * 1.1
             const dailyDeficit = gramsDeficit * 1.1;
             
-            // יעד קלוריות = TDEE - daily deficit
-            const calorieTarget = selectedTdee - dailyDeficit;
+            let baseCalories;
             
-            // Update calorie targets based on selected window and grams deficit
+            if (!selectedWindow || !windowTdeeMap[selectedWindow]) {
+                // If no window selected, use base 2400 and apply grams deficit
+                baseCalories = 2400;
+            } else {
+                // If window selected, use TDEE of that window
+                const selectedTdee = windowTdeeMap[selectedWindow];
+                baseCalories = selectedTdee;
+            }
+            
+            // יעד קלוריות = base - daily deficit
+            const calorieTarget = baseCalories - dailyDeficit;
+            
+            // Update calorie target based on base (2400 or TDEE) and grams deficit
+            // Note: netCaloriesTarget stays unchanged when grams deficit is entered
             document.getElementById('calorieTarget').value = Math.round(calorieTarget);
-            document.getElementById('netCaloriesTarget').value = Math.round(calorieTarget);
             
             // Recalculate macros based on the new calorie target
             recalculateMacros();
@@ -807,13 +806,8 @@
                 // Populate window dropdown
                 populateWindowDropdown();
                 
-                // Ensure defaults are 2400 if no window is selected
-                const selectedWindow = parseInt(document.getElementById('windowSelect').value);
-                if (!selectedWindow || !windowTdeeMap[selectedWindow]) {
-                    document.getElementById('calorieTarget').value = 2400;
-                    document.getElementById('netCaloriesTarget').value = 2400;
-                    recalculateMacros();
-                }
+                // Ensure defaults are set correctly (2400 or based on selected window and grams deficit)
+                fillDefaultsFromWindow();
                 
                 displayData();
                 loading.style.display = 'none';
