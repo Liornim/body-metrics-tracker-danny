@@ -176,6 +176,17 @@
             <div id="saveAllResults" style="display: none; margin-top: 15px; background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 10px; max-width: 600px; margin-left: auto; margin-right: auto;"></div>
         </div>
         
+        <div class="status-bar" style="margin-top: 20px;">
+            <div class="status-item">
+                <div class="status-label">ימים במעקב</div>
+                <div class="status-value" id="totalDays">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">ירידה במשקל (ק״ג)</div>
+                <div class="status-value" id="weightLoss">--</div>
+            </div>
+        </div>
+        
         <div class="status-bar">
             <div class="status-item">
                 <div class="status-label">ממוצע חלבון (3 ימים)</div>
@@ -204,19 +215,14 @@
         
         <div class="status-bar" style="margin-top: 20px;">
             <div class="status-item">
-                <div class="status-label">חלבון מינימלי</div>
+                <div class="status-label">מחסור חלבון כולל</div>
                 <div class="status-value" id="maxProteinGap">--</div>
                 <div class="status-label" style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">יעד: <span id="proteinTarget">190</span> גרם</div>
             </div>
             <div class="status-item">
-                <div class="status-label">שומן מקסימלי</div>
+                <div class="status-label">עודף/חוסר שומן כולל</div>
                 <div class="status-value" id="minFatGap">--</div>
                 <div class="status-label" style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">יעד: <span id="fatTarget">67</span> גרם</div>
-            </div>
-            <div class="status-item">
-                <div class="status-label">פחמימות נטו מקסימום</div>
-                <div class="status-value" id="minCarbsGap">--</div>
-                <div class="status-label" style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">יעד: <span id="carbsTarget">259</span> גרם</div>
             </div>
         </div>
         
@@ -336,7 +342,7 @@
                 <div class="app-icon">📈</div>
                 <div class="app-title">ניתוח משקל לפי חלונות</div>
                 <div class="app-description">ניתוח מגמות משקל עם חלונות זמן לא חופפים לזיהוי דפוסים</div>
-                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-analysis-by-windows.html" class="app-link" target="_blank"><span class="future-mark">🔮 בקרוב</span>🌐 פתח</a>
+                <a href="https://liornim.github.io/body-metrics-tracker-danny/weight-analysis-by-windows.html" class="app-link" target="_blank">🌐 פתח</a>
             </div>
             
             <!-- Nutrition Windows Comparison -->
@@ -610,50 +616,52 @@
                         document.getElementById('maxCaloriesTodayTdee').textContent = '--';
                     }
                     
-                    // Calculate macro gaps across all windows
-                    const targetMacros = calculateMacrosForCalories(CALORIE_TARGET);
-                    const allProteinGaps = [];
-                    const allFatGaps = [];
-                    const allCarbsGaps = [];
+                    // Calculate total protein lack for all days tracked
+                    // Recalculate dataStartIndex to ensure it's available
+                    const macroDataStartIndex = hasHeader ? 1 : 0;
+                    const allDaysData = nutritionData.slice(macroDataStartIndex);
                     
-                    WINDOWS.forEach(windowDays => {
-                        const actuals = calculateWindowActuals(nutritionData, windowDays);
-                        
-                        if (actuals) {
-                            // Calculate cumulative target for window days
-                            const cumulativeTargetProtein = targetMacros.protein * windowDays;
-                            const cumulativeTargetFat = targetMacros.fat * windowDays;
-                            const cumulativeTargetCarbs = targetMacros.carbs * windowDays;
+                    // Calculate total actual protein for all days
+                    let totalActualProtein = 0;
+                    let totalActualFat = 0;
+                    let validDays = 0;
+                    
+                    allDaysData.forEach(row => {
+                        if (row && Array.isArray(row) && row.length >= 5) {
+                            const calories = parseFloat(row[1]) || 0;
+                            const fat = parseFloat(row[2]) || 0;
+                            const protein = parseFloat(row[4]) || 0;
                             
-                            // Calculate gaps: Cumulative Target - Cumulative Actual
-                            const proteinGap = cumulativeTargetProtein - actuals.totalProtein;
-                            const fatGap = cumulativeTargetFat - actuals.totalFat;
-                            const carbsGap = cumulativeTargetCarbs - actuals.totalNetCarbs;
-                            
-                            allProteinGaps.push(proteinGap);
-                            allFatGaps.push(fatGap);
-                            allCarbsGaps.push(carbsGap);
+                            if (calories > 0 || protein > 0 || fat > 0) {
+                                totalActualProtein += protein;
+                                totalActualFat += fat;
+                                validDays++;
+                            }
                         }
                     });
                     
                     // Set target values (always visible)
                     document.getElementById('proteinTarget').textContent = PROTEIN_GRAMS;
                     document.getElementById('fatTarget').textContent = FAT_GRAMS;
-                    document.getElementById('carbsTarget').textContent = CARBS_GRAMS;
                     
-                    if (allProteinGaps.length > 0) {
-                        // Find max protein gap (biggest) and min fat/carbs gaps (lowest)
-                        const maxProteinGap = Math.max(...allProteinGaps);
-                        const minFatGap = Math.min(...allFatGaps);
-                        const minCarbsGap = Math.min(...allCarbsGaps);
+                    if (validDays > 0) {
+                        // Calculate total target for all days
+                        const targetMacros = calculateMacrosForCalories(CALORIE_TARGET);
+                        const totalTargetProtein = targetMacros.protein * validDays;
+                        const totalTargetFat = targetMacros.fat * validDays;
                         
-                        document.getElementById('maxProteinGap').textContent = maxProteinGap.toFixed(0);
-                        document.getElementById('minFatGap').textContent = minFatGap.toFixed(0);
-                        document.getElementById('minCarbsGap').textContent = minCarbsGap.toFixed(0);
+                        // Calculate total lack: Target - Actual (positive = lack, negative = surplus)
+                        const totalProteinLack = totalTargetProtein - totalActualProtein;
+                        const totalFatGap = totalTargetFat - totalActualFat;
+                        
+                        // Display total protein lack (show as positive number if there's a lack)
+                        document.getElementById('maxProteinGap').textContent = totalProteinLack > 0 ? totalProteinLack.toFixed(0) : '0';
+                        
+                        // Display fat gap (negative = surplus, positive = lack)
+                        document.getElementById('minFatGap').textContent = totalFatGap.toFixed(0);
                     } else {
                         document.getElementById('maxProteinGap').textContent = '--';
                         document.getElementById('minFatGap').textContent = '--';
-                        document.getElementById('minCarbsGap').textContent = '--';
                     }
                 }
                 
@@ -661,12 +669,57 @@
                 const bodyMetricsResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=get`);
                 const bodyMetricsData = await bodyMetricsResponse.json();
                 
-                if (bodyMetricsData.success && bodyMetricsData.data && bodyMetricsData.data.length >= 3) {
+                if (bodyMetricsData.success && bodyMetricsData.data) {
                     // Calculate last 3 days weight average from גיליון1, column משקל (ק״ג) which is index 1
-                    const last3Days = bodyMetricsData.data.slice(0, 3);
-                    const weightSum = last3Days.reduce((sum, row) => sum + (parseFloat(row[1]) || 0), 0);
-                    const weightAvg = (weightSum / 3).toFixed(2);
-                    document.getElementById('lastDaysAvgWeight').textContent = weightAvg + ' ק"ג';
+                    if (bodyMetricsData.data.length >= 3) {
+                        const last3Days = bodyMetricsData.data.slice(0, 3);
+                        const weightSum = last3Days.reduce((sum, row) => sum + (parseFloat(row[1]) || 0), 0);
+                        const weightAvg = (weightSum / 3).toFixed(2);
+                        document.getElementById('lastDaysAvgWeight').textContent = weightAvg + ' ק"ג';
+                    }
+                    
+                    // Calculate total days tracked and weight loss
+                    // Convert array format to objects and sort by date (like weight-summary-by-windows.html)
+                    const weightDataObjects = bodyMetricsData.data
+                        .filter(row => row && row.length > 1 && parseFloat(row[1]) > 0)
+                        .map(row => ({
+                            date: row[0],
+                            weight: parseFloat(row[1]) || 0
+                        }));
+                    
+                    if (weightDataObjects.length > 0) {
+                        // Total days = number of weight entries
+                        const totalDays = weightDataObjects.length;
+                        document.getElementById('totalDays').textContent = totalDays;
+                        
+                        // Sort by date ascending (oldest first) - same as weight-summary-by-windows.html
+                        function parseDate(dateStr) {
+                            if (!dateStr) return new Date(0);
+                            const parts = dateStr.split('/');
+                            if (parts.length === 3) {
+                                return new Date(parts[2], parts[1] - 1, parts[0]);
+                            }
+                            return new Date(dateStr);
+                        }
+                        
+                        const sortedData = [...weightDataObjects].sort((a, b) => {
+                            const dateA = parseDate(a.date);
+                            const dateB = parseDate(b.date);
+                            return dateA - dateB;
+                        });
+                        
+                        // Weight loss = first weight (oldest) - last weight (newest) - same as weight-summary-by-windows.html
+                        const firstWeight = sortedData[0].weight; // Oldest
+                        const lastWeight = sortedData[sortedData.length - 1].weight; // Newest
+                        const weightLoss = Math.max(0, firstWeight - lastWeight); // Weight loss = old - new
+                        document.getElementById('weightLoss').textContent = weightLoss.toFixed(1) + ' ק"ג';
+                    } else {
+                        document.getElementById('totalDays').textContent = '--';
+                        document.getElementById('weightLoss').textContent = '--';
+                    }
+                } else {
+                    document.getElementById('totalDays').textContent = '--';
+                    document.getElementById('weightLoss').textContent = '--';
                 }
                 
             } catch (error) {
@@ -680,7 +733,6 @@
             // Set target values (always visible)
             document.getElementById('proteinTarget').textContent = PROTEIN_GRAMS;
             document.getElementById('fatTarget').textContent = FAT_GRAMS;
-            document.getElementById('carbsTarget').textContent = CARBS_GRAMS;
             
             // Load statistics
             loadStatistics();
