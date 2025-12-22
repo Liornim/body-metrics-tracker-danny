@@ -1,0 +1,843 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סיכום משקל ותזונה - TDEE ללא צעדים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .refresh-btn {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .top-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .top-summary h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .top-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        
+        .top-summary-item {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .top-summary-item:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .top-summary-window {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            opacity: 0.95;
+        }
+        
+        .top-summary-change {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .top-summary-change.positive {
+            color: #ffcdd2;
+        }
+        
+        .top-summary-change.negative {
+            color: #c8e6c9;
+        }
+        
+        .top-summary-change.neutral {
+            color: #ffe0b2;
+        }
+        
+        .top-summary-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .top-summary-dates {
+            font-size: 0.8rem;
+            opacity: 0.85;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .nutrition-info {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .nutrition-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .nutrition-label {
+            opacity: 0.9;
+        }
+        
+        .nutrition-value {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .nutrition-dates {
+            font-size: 0.75rem;
+            opacity: 0.75;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        
+        .summary-table-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: white;
+        }
+        
+        .summary-table th {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 15px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .summary-table td {
+            padding: 10px 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .summary-table tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .summary-table .window-cell {
+            font-weight: bold;
+        }
+        
+        .summary-table .value-cell {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>סיכום משקל ותזונה - TDEE ללא צעדים</h1>
+            <p>הצגת סיכום שינוי משקל, קלוריות, צעדים ו-TDEE ללא צעדים לכל חלון זמן</p>
+        </div>
+        
+        <div class="content">
+            <div class="controls">
+                <button class="refresh-btn" onclick="loadData()">🔄 רענן נתונים</button>
+            </div>
+            
+            <div id="loading" class="loading" style="display: none;">
+                טוען נתונים ומחשב ניתוחים...
+            </div>
+            
+            <div id="error" class="error" style="display: none;">
+                ❌ שגיאה בטעינת הנתונים.
+            </div>
+            
+            <div id="topSummary" class="top-summary" style="display: none;">
+                <h3>📊 סיכום שינוי משקל, קלוריות, צעדים ו-TDEE לכל חלון</h3>
+                
+                <div style="margin-bottom: 15px; text-align: left;">
+                    <button onclick="exportToExcel()" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        📥 ייצא ל-Excel
+                    </button>
+                </div>
+                
+                <div class="summary-table-container" id="summaryTableContainer" style="display: none;">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>חלון</th>
+                                <th>Net Tdee</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="top-summary-grid" id="topSummaryGrid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
+        const windowSizes = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 28];
+        let calculatedCardsData = []; // Store cards data for export
+        
+        // Parse DD/MM/YYYY date format
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        // Format date as DD/MM/YYYY
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Subtract one day from a date
+        function subtractOneDay(dateStr) {
+            const date = parseDate(dateStr);
+            if (!date) return null;
+            date.setDate(date.getDate() - 1);
+            return formatDate(date);
+        }
+        
+        // Sort data by date ascending
+        function sortDataAsc(data) {
+            return [...data].sort((a, b) => {
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                if (!dateA || !dateB) return 0;
+                return dateA - dateB;
+            });
+        }
+        
+        // Create non-overlapping chunks
+        function createChunks(data, windowSize) {
+            const chunks = [];
+            for (let i = 0; i < data.length; i += windowSize) {
+                chunks.push(data.slice(i, i + windowSize));
+            }
+            return chunks;
+        }
+        
+        // Calculate mean
+        function calculateMean(values) {
+            if (values.length === 0) return 0;
+            const validValues = values.filter(v => v !== null && v !== undefined && !isNaN(v));
+            if (validValues.length === 0) return 0;
+            return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+        }
+        
+        // Format weight with 2 decimal places
+        function formatWeight(weight) {
+            return weight.toFixed(2);
+        }
+        
+        // Format delta with sign
+        function formatDelta(delta) {
+            if (delta === null || delta === undefined) return '—';
+            const sign = delta >= 0 ? '+' : '';
+            return `${sign}${delta.toFixed(2)}`;
+        }
+        
+        // Get trend indicator
+        function getTrendIndicator(delta) {
+            if (delta === null || delta === undefined) return '';
+            if (delta > 0) return '<span style="color: #ffcdd2;">↗</span>';
+            if (delta < 0) return '<span style="color: #c8e6c9;">↘</span>';
+            return '<span style="color: #ffe0b2;">→</span>';
+        }
+        
+        // Get delta class for styling
+        function getDeltaClass(delta) {
+            if (delta === null || delta === undefined) return 'neutral';
+            return delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral';
+        }
+        
+        // Process window analysis for weight data
+        function processWindowAnalysis(data, windowSize) {
+            const sortedData = sortDataAsc(data);
+            const chunks = createChunks(sortedData, windowSize);
+            
+            const results = [];
+            
+            chunks.forEach((chunk, index) => {
+                if (chunk.length === 0) return;
+                
+                // Only include full windows (exactly windowSize days)
+                if (chunk.length !== windowSize) return;
+                
+                const weights = chunk.map(item => item.weight);
+                const average = calculateMean(weights);
+                const dateRange = `${chunk[0].date} - ${chunk[chunk.length - 1].date}`;
+                
+                const result = {
+                    window: windowSize,
+                    range: dateRange,
+                    average: average,
+                    delta: null,
+                    index: index + 1,
+                    daysCount: chunk.length,
+                    startDate: chunk[0].date,
+                    endDate: chunk[chunk.length - 1].date
+                };
+                
+                // Calculate delta vs previous window
+                if (index > 0) {
+                    // Find the previous full window
+                    for (let prevIndex = index - 1; prevIndex >= 0; prevIndex--) {
+                        if (chunks[prevIndex].length === windowSize) {
+                            const prevWeights = chunks[prevIndex].map(item => item.weight);
+                            const prevAverage = calculateMean(prevWeights);
+                            result.delta = average - prevAverage;
+                            break;
+                        }
+                    }
+                }
+                
+                results.push(result);
+            });
+            
+            return results;
+        }
+        
+        // Get nutrition data for a date range (calories dates are -1 day from weight dates)
+        function getNutritionForWindow(nutritionData, startDate, endDate) {
+            // Calculate calories dates (weight dates - 1 day)
+            const caloriesStartDate = subtractOneDay(startDate);
+            const caloriesEndDate = subtractOneDay(endDate);
+            
+            if (!caloriesStartDate || !caloriesEndDate) {
+                return { avgCalories: 0, totalCalories: 0, avgSteps: 0, caloriesRange: '--' };
+            }
+            
+            // Check if first row is header
+            const hasHeader = nutritionData[0] && nutritionData[0][0] && 
+                             (typeof nutritionData[0][0] === 'string') && 
+                             (nutritionData[0][0].includes('תאריך') || nutritionData[0][0].includes('Date'));
+            
+            const dataStartIndex = hasHeader ? 1 : 0;
+            
+            // Data is ordered from newest to oldest, so we need to find matching dates
+            const calories = [];
+            const steps = [];
+            
+            for (let i = dataStartIndex; i < nutritionData.length; i++) {
+                const row = nutritionData[i];
+                if (!row || row.length === 0) continue;
+                
+                const rowDate = row[0];
+                if (!rowDate) continue;
+                
+                // Check if date is within range (inclusive)
+                const date = parseDate(rowDate);
+                const start = parseDate(caloriesStartDate);
+                const end = parseDate(caloriesEndDate);
+                
+                if (!date || !start || !end) continue;
+                
+                // Compare dates (accounting for order - data might be newest to oldest)
+                const isInRange = (date >= start && date <= end) || (date >= end && date <= start);
+                
+                if (isInRange) {
+                    const cal = parseFloat(row[1]) || 0; // Calories in column 1
+                    const step = parseFloat(row[6]) || 0; // Steps in column 6
+                    
+                    if (cal > 0) calories.push(cal);
+                    if (step > 0) steps.push(step);
+                }
+            }
+            
+            const avgCalories = calculateMean(calories);
+            const totalCalories = calories.reduce((sum, cal) => sum + cal, 0);
+            const avgSteps = calculateMean(steps);
+            
+            return {
+                avgCalories: avgCalories,
+                totalCalories: totalCalories,
+                avgSteps: avgSteps,
+                caloriesRange: `${caloriesStartDate} - ${caloriesEndDate}`
+            };
+        }
+        
+        // Simple TDEE calculation: delta × 7700
+        // delta is in kg (negative = weight loss, positive = weight gain)
+        function calculateTDEE(delta) {
+            if (delta === null || delta === undefined) {
+                return 0;
+            }
+            
+            // Round delta to 2 decimal places to avoid floating point precision issues
+            const deltaRounded = Math.round(Math.abs(delta) * 100) / 100;
+            
+            // If delta is positive (weight gain), TDEE should be negative
+            // If delta is negative (weight loss), TDEE should be positive
+            const tdee = delta >= 0 ? -(deltaRounded * 7700) : (deltaRounded * 7700);
+            
+            return tdee;
+        }
+        
+        // Display top summary with last weight change, calories, steps, and TDEE for each window
+        function displayTopSummary(weightData, nutritionData) {
+            const topSummary = document.getElementById('topSummary');
+            const topSummaryGrid = document.getElementById('topSummaryGrid');
+            const summaryTableContainer = document.getElementById('summaryTableContainer');
+            const summaryTableBody = document.getElementById('summaryTableBody');
+            
+            calculatedCardsData = []; // Reset stored data
+            
+            if (weightData.length === 0) {
+                topSummary.style.display = 'none';
+                return;
+            }
+            
+            let summaryHtml = '';
+            let summaryTableRows = '';
+            
+            windowSizes.forEach(windowSize => {
+                const results = processWindowAnalysis(weightData, windowSize);
+                const lastThreeFullWindows = results.filter(r => r.daysCount === windowSize);
+                
+                if (lastThreeFullWindows.length === 0) {
+                    // Add row to summary table with no data
+                    summaryTableRows += `
+                        <tr>
+                            <td class="window-cell">${windowSize} ימים</td>
+                            <td class="value-cell">--</td>
+                        </tr>
+                    `;
+                    summaryHtml += `
+                        <div class="top-summary-item">
+                            <div class="top-summary-window">חלון ${windowSize} ימים</div>
+                            <div class="top-summary-change neutral">--</div>
+                            <div class="top-summary-label">אין נתונים</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Get the last window's delta (change from previous window)
+                const lastWindow = lastThreeFullWindows[lastThreeFullWindows.length - 1];
+                const delta = lastWindow.delta;
+                const deltaClass = getDeltaClass(delta);
+                const deltaText = formatDelta(delta);
+                const trendIndicator = getTrendIndicator(delta);
+                
+                // Get nutrition data for this window (calories dates are -1 day)
+                const nutrition = getNutritionForWindow(nutritionData, lastWindow.startDate, lastWindow.endDate);
+                
+                // Simple TDEE calculation: delta × 7700
+                // If delta is positive (weight gain), TDEE is negative
+                // If delta is negative (weight loss), TDEE is positive
+                const tdee = calculateTDEE(delta);
+                
+                // Average TDEE per day = TDEE / window days
+                const avgTdeePerDay = windowSize > 0 ? tdee / windowSize : 0;
+                
+                // Calories from steps = Average Steps / 25
+                const caloriesFromSteps = nutrition.avgSteps / 25;
+                
+                // Sum of average calories + average TDEE per day
+                const avgCaloriesPlusAvgTdee = Math.round(nutrition.avgCalories) + Math.round(avgTdeePerDay);
+                
+                // ממוצע קלוריות + ממוצע TDEE ליום - קלוריות מצעדים
+                const avgCaloriesPlusTdeeMinusSteps = avgCaloriesPlusAvgTdee - Math.round(caloriesFromSteps);
+                
+                // Store data for export
+                calculatedCardsData.push({
+                    windowSize: windowSize,
+                    delta: delta,
+                    deltaText: deltaText,
+                    range: lastWindow.range,
+                    avgCalories: Math.round(nutrition.avgCalories),
+                    totalCalories: Math.round(nutrition.totalCalories),
+                    avgSteps: Math.round(nutrition.avgSteps),
+                    tdee: Math.round(tdee),
+                    avgTdeePerDay: Math.round(avgTdeePerDay),
+                    caloriesFromSteps: Math.round(caloriesFromSteps),
+                    avgCaloriesPlusAvgTdee: avgCaloriesPlusAvgTdee,
+                    avgCaloriesPlusTdeeMinusSteps: avgCaloriesPlusTdeeMinusSteps,
+                    caloriesRange: nutrition.caloriesRange
+                });
+                
+                // Add row to summary table
+                summaryTableRows += `
+                    <tr>
+                        <td class="window-cell">${windowSize} ימים</td>
+                        <td class="value-cell">${avgCaloriesPlusTdeeMinusSteps}</td>
+                    </tr>
+                `;
+                
+                summaryHtml += `
+                    <div class="top-summary-item">
+                        <div class="top-summary-window">חלון ${windowSize} ימים</div>
+                        <div class="top-summary-change ${deltaClass}">${deltaText} ${trendIndicator}</div>
+                        <div class="top-summary-label">שינוי משקל אחרון</div>
+                        <div class="top-summary-dates">${lastWindow.range}</div>
+                        
+                        <div class="nutrition-info">
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">ממוצע קלוריות:</span>
+                                <span class="nutrition-value">${Math.round(nutrition.avgCalories)}</span>
+                            </div>
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">סה"כ קלוריות:</span>
+                                <span class="nutrition-value">${Math.round(nutrition.totalCalories)}</span>
+                            </div>
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">ממוצע צעדים:</span>
+                                <span class="nutrition-value">${Math.round(nutrition.avgSteps)}</span>
+                            </div>
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">TDEE (שינוי × 7700):</span>
+                                <span class="nutrition-value ${tdee < 0 ? 'negative' : tdee > 0 ? 'positive' : ''}">${tdee >= 0 ? '+' : ''}${Math.round(tdee)}</span>
+                            </div>
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">ממוצע TDEE ליום:</span>
+                                <span class="nutrition-value ${avgTdeePerDay < 0 ? 'negative' : avgTdeePerDay > 0 ? 'positive' : ''}">${avgTdeePerDay >= 0 ? '+' : ''}${Math.round(avgTdeePerDay)}</span>
+                            </div>
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">קלוריות מצעדים:</span>
+                                <span class="nutrition-value">${Math.round(caloriesFromSteps)}</span>
+                            </div>
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">ממוצע קלוריות + ממוצע TDEE ליום:</span>
+                                <span class="nutrition-value">${avgCaloriesPlusAvgTdee}</span>
+                            </div>
+                            <div class="nutrition-row">
+                                <span class="nutrition-label">ממוצע קלוריות + ממוצע TDEE ליום - קלוריות מצעדים:</span>
+                                <span class="nutrition-value">${avgCaloriesPlusTdeeMinusSteps}</span>
+                            </div>
+                            <div class="nutrition-dates">${nutrition.caloriesRange}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Display summary table
+            if (summaryTableRows) {
+                summaryTableBody.innerHTML = summaryTableRows;
+                summaryTableContainer.style.display = 'block';
+            } else {
+                summaryTableContainer.style.display = 'none';
+            }
+            
+            topSummaryGrid.innerHTML = summaryHtml;
+            topSummary.style.display = 'block';
+        }
+        
+        // Load data from Google Sheets
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const topSummary = document.getElementById('topSummary');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            topSummary.style.display = 'none';
+            
+            try {
+                console.log('טוען נתוני משקל ותזונה מ-Google Sheets...');
+                
+                // Load body metrics (weight)
+                const weightResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=get`);
+                const weightData = await weightResponse.json();
+                
+                // Load nutrition data (calories and steps)
+                const nutritionResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=getNutrition`);
+                const nutritionData = await nutritionResponse.json();
+                
+                if (!weightData.success || !weightData.data || weightData.data.length === 0) {
+                    throw new Error('לא נמצאו נתוני משקל');
+                }
+                
+                if (!nutritionData.success || !nutritionData.data) {
+                    console.warn('לא נמצאו נתוני תזונה');
+                }
+                
+                // Check if first row is header for weight data
+                const hasHeader = weightData.data[0] && weightData.data[0][0] && 
+                                 (typeof weightData.data[0][0] === 'string') && 
+                                 (weightData.data[0][0].includes('תאריך') || weightData.data[0][0].includes('Date') || 
+                                  weightData.data[0][0].includes('משקל') || weightData.data[0][0].includes('Weight'));
+                
+                const startIndex = hasHeader ? 1 : 0;
+                
+                // Convert weight data to the format we need
+                // Data is ordered from newest to oldest, so we need to reverse it
+                const rawWeightData = weightData.data.slice(startIndex).reverse();
+                
+                const currentWeightData = rawWeightData.map(row => ({
+                    date: row[0], // Date
+                    weight: parseFloat(row[1]) // Weight
+                })).filter(item => item.weight > 0 && item.date); // Filter out invalid entries
+                
+                console.log(`נטענו ${currentWeightData.length} נקודות נתוני משקל`);
+                
+                // Display top summary
+                displayTopSummary(currentWeightData, nutritionData.data || []);
+                
+            } catch (error) {
+                console.error('שגיאה בטעינת נתונים:', error);
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = `❌ שגיאה בטעינת הנתונים: ${error.message}`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('דף סיכום משקל ותזונה - TDEE ללא צעדים נטען');
+            loadData();
+        });
+        
+        // Export table and cards to Excel
+        function exportToExcel() {
+            if (calculatedCardsData.length === 0) {
+                alert('אין נתונים לייצוא. אנא טען נתונים קודם.');
+                return;
+            }
+            
+            let csvContent = '';
+            
+            // Export cards data first
+            csvContent += 'כרטיסים - סיכום משקל, קלוריות, צעדים ו-TDEE\n';
+            const cardsHeaders = [
+                'חלון זמן (ימים)',
+                'שינוי משקל אחרון (ק"ג)',
+                'טווח תאריכים',
+                'ממוצע קלוריות',
+                'סה"כ קלוריות',
+                'ממוצע צעדים',
+                'TDEE (שינוי × 7700)',
+                'ממוצע TDEE ליום',
+                'קלוריות מצעדים',
+                'ממוצע קלוריות + ממוצע TDEE ליום',
+                'ממוצע קלוריות + ממוצע TDEE ליום - קלוריות מצעדים',
+                'טווח תאריכים קלוריות'
+            ];
+            csvContent += cardsHeaders.join(',') + '\n';
+            
+            calculatedCardsData.forEach(card => {
+                const rowData = [
+                    card.windowSize || '',
+                    card.delta !== undefined && card.delta !== null ? (card.delta >= 0 ? '+' : '') + card.delta.toFixed(2) : '',
+                    card.range || '',
+                    card.avgCalories || '',
+                    card.totalCalories || '',
+                    card.avgSteps || '',
+                    card.tdee !== undefined && card.tdee !== null ? (card.tdee >= 0 ? '+' : '') + card.tdee : '',
+                    card.avgTdeePerDay !== undefined && card.avgTdeePerDay !== null ? (card.avgTdeePerDay >= 0 ? '+' : '') + card.avgTdeePerDay : '',
+                    card.caloriesFromSteps || '',
+                    card.avgCaloriesPlusAvgTdee || '',
+                    card.avgCaloriesPlusTdeeMinusSteps || '',
+                    card.caloriesRange || ''
+                ];
+                
+                // Escape and wrap in quotes
+                const escapedRow = rowData.map(cell => {
+                    let cellText = String(cell || '');
+                    if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                        cellText = ' ' + cellText;
+                    }
+                    cellText = cellText.replace(/\/(\s*)-/g, '/ -');
+                    return '"' + cellText.replace(/"/g, '""') + '"';
+                });
+                
+                csvContent += escapedRow.join(',') + '\n';
+            });
+            
+            // Add separator
+            csvContent += '\n';
+            csvContent += 'טבלת סיכום - Net Tdee\n';
+            
+            // Export summary table
+            const tables = document.querySelectorAll('table');
+            if (tables.length > 0) {
+                const table = tables[0];
+                const tbody = table.querySelector('tbody');
+                
+                if (tbody) {
+                    const rows = tbody.querySelectorAll('tr');
+                    
+                    // Get headers from thead
+                    const thead = table.querySelector('thead');
+                    if (thead) {
+                        const headerRows = thead.querySelectorAll('tr');
+                        headerRows.forEach(headerRow => {
+                            const headerCells = headerRow.querySelectorAll('th');
+                            const headerData = [];
+                            headerCells.forEach(cell => {
+                                let cellText = cell.textContent.trim();
+                                if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                                    cellText = ' ' + cellText;
+                                }
+                                if (cellText.includes(',') || cellText.includes('"')) {
+                                    cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                                }
+                                headerData.push(cellText || '');
+                            });
+                            csvContent += headerData.join(',') + '\n';
+                        });
+                    }
+                    
+                    // Get all data rows
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length === 0) return;
+                        
+                        const rowData = [];
+                        
+                        cells.forEach((cell) => {
+                            let cellText = cell.textContent.trim() || cell.innerText.trim();
+                            
+                            if (!cellText) {
+                                rowData.push('""');
+                                return;
+                            }
+                            
+                            if (cellText.startsWith('=') || cellText.startsWith('+') || cellText.startsWith('-')) {
+                                cellText = ' ' + cellText;
+                            }
+                            
+                            cellText = cellText.replace(/\/(\s*)-/g, '/ -');
+                            cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                            
+                            rowData.push(cellText);
+                        });
+                        
+                        csvContent += rowData.join(',') + '\n';
+                    });
+                }
+            }
+            
+            // Create BOM for UTF-8 (Excel compatibility with Hebrew)
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            link.setAttribute('download', `סיכום_משקל_TDEE_${dateStr}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
+
