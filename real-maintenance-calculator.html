@@ -1,0 +1,573 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון תחזוקה עד היום</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .date-selector {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .date-selector h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .date-input {
+            display: inline-block;
+            position: relative;
+            margin: 0 10px;
+        }
+        
+        .date-input input {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .date-display {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .window-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 5px solid #4CAF50;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .window-card h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .metric-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            background: #e8f5e8;
+            margin: 10px -20px -20px -20px;
+            padding: 15px 20px;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .metric-value.positive {
+            color: #4CAF50;
+        }
+        
+        .metric-value.negative {
+            color: #f44336;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .explanation {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .explanation h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .explanation p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .formula {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .summary-section {
+            background: #e8f5e8;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 2px solid #4CAF50;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .summary-card h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 5px;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metric-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧮 מחשבון תחזוקה עד היום</h1>
+            <p>חישוב תחזוקה אמיתית על בסיס שינויי משקל וצריכת קלוריות בפועל</p>
+        </div>
+        
+        <div class="content">
+            <div class="explanation">
+                <h4>📊 איך זה עובד?</h4>
+                <p><strong>הנוסחה:</strong> תחזוקה אמיתית = קלוריות ממוצעות + (ירידת משקל × 7700 ÷ ימים) - (צעדים ממוצעים ÷ 25)</p>
+                <div class="formula">
+                    Real Maintenance = Avg Calories + (Weight Loss × 7700 ÷ Days) - (Avg Steps ÷ 25)
+                </div>
+                <p><strong>7700 קלוריות = 1 ק"ג שומן</strong> - זה המרה מדויקת לירידת משקל</p>
+                <p><strong>25 צעדים = 1 קלוריה</strong> - זה המרה לצעדים שנשרפו</p>
+            </div>
+            
+            <div id="summarySection" class="summary-section" style="display: none;">
+                <h3 style="text-align: center; color: #2e7d32; margin-bottom: 20px;">📊 סיכום תחזוקה אמיתית</h3>
+                <div id="summaryGrid" class="summary-grid">
+                    <!-- Summary cards will be populated here -->
+                </div>
+            </div>
+            
+            <div class="date-selector">
+                <h3>📅 בחר תאריך לחישוב</h3>
+                <div class="date-input">
+                    <input type="date" id="datePicker" style="opacity: 0; position: absolute; z-index: 2; width: 100%;">
+                    <div id="dateDisplay" class="date-display">בחר תאריך</div>
+                </div>
+                <button class="btn" onclick="calculateMaintenance()">🧮 חשב תחזוקה</button>
+            </div>
+            
+            <div id="loading" class="loading" style="display: none;">
+                🔄 טוען נתונים ומחשב תחזוקה...
+            </div>
+            
+            <div id="error" class="error" style="display: none;"></div>
+            
+            <div id="results" class="results-grid" style="display: none;">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJnimpbNPlmzX5mv43iDNgmg8CNHHS2w8Jqt6fdPNMiFuvQc0THDJU3i9eaQc4g0Vb/exec';
+        
+        // Set today's date as default
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            document.getElementById('datePicker').value = todayStr;
+            
+            // Display today's date in DD/MM/YYYY format
+            const parts = todayStr.split('-');
+            const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            document.getElementById('dateDisplay').textContent = formattedDate;
+        });
+
+        // Format date picker display
+        document.getElementById('datePicker').addEventListener('change', function() {
+            const selectedDate = this.value;
+            if (selectedDate) {
+                const parts = selectedDate.split('-');
+                const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                document.getElementById('dateDisplay').textContent = formattedDate;
+            }
+        });
+
+        // Make the display div clickable
+        document.getElementById('dateDisplay').addEventListener('click', function() {
+            document.getElementById('datePicker').showPicker();
+        });
+
+        async function calculateMaintenance() {
+            const selectedDate = document.getElementById('datePicker').value;
+            if (!selectedDate) {
+                showError('אנא בחר תאריך');
+                return;
+            }
+
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('results').style.display = 'none';
+
+                // Load both body metrics and nutrition data
+                const [bodyMetricsResponse, nutritionResponse] = await Promise.all([
+                    fetch(`${GOOGLE_SCRIPT_URL}?action=get`),
+                    fetch(`${GOOGLE_SCRIPT_URL}?action=getNutrition`)
+                ]);
+
+                const bodyMetricsData = await bodyMetricsResponse.json();
+                const nutritionData = await nutritionResponse.json();
+
+                if (!bodyMetricsData.success || !nutritionData.success) {
+                    showError('שגיאה בטעינת נתונים');
+                    return;
+                }
+
+                // Convert selected date to DD/MM/YYYY for comparison
+                const selectedDateParts = selectedDate.split('-');
+                const selectedDateFormatted = `${selectedDateParts[2]}/${selectedDateParts[1]}/${selectedDateParts[0]}`;
+
+                // Calculate maintenance for each window
+                const windows = [3, 5, 7, 9, 14, 21, 28];
+                const results = [];
+
+                for (const windowDays of windows) {
+                    const result = calculateWindowMaintenance(
+                        bodyMetricsData.data, 
+                        nutritionData.data, 
+                        selectedDateFormatted, 
+                        windowDays
+                    );
+                    if (result) {
+                        results.push(result);
+                    }
+                }
+
+                displayResults(results, selectedDateFormatted);
+
+            } catch (error) {
+                showError('שגיאה בחיבור לשרת: ' + error.message);
+            }
+        }
+
+        function calculateWindowMaintenance(bodyData, nutritionData, selectedDate, windowDays) {
+            // Sort data by date (newest first)
+            const sortedBodyData = [...bodyData].sort((a, b) => new Date(b[0]) - new Date(a[0]));
+            const sortedNutritionData = [...nutritionData].sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
+            // Find the selected date index
+            const selectedIndex = sortedBodyData.findIndex(row => row[0] === selectedDate);
+            if (selectedIndex === -1) {
+                console.log(`Selected date ${selectedDate} not found in body data`);
+                return null;
+            }
+
+            // Get current window data (including selected date)
+            const currentWindowBody = sortedBodyData.slice(selectedIndex, selectedIndex + windowDays);
+            const currentWindowNutrition = sortedNutritionData.slice(selectedIndex, selectedIndex + windowDays);
+
+            // Get previous window data (before current window)
+            const previousWindowBody = sortedBodyData.slice(selectedIndex + windowDays, selectedIndex + windowDays * 2);
+            const previousWindowNutrition = sortedNutritionData.slice(selectedIndex + windowDays, selectedIndex + windowDays * 2);
+
+            if (currentWindowBody.length < windowDays || previousWindowBody.length < windowDays) {
+                console.log(`Not enough data for ${windowDays}-day window`);
+                return null;
+            }
+
+            // Calculate averages for current window
+            const currentAvgWeight = currentWindowBody.reduce((sum, row) => sum + parseFloat(row[1]), 0) / windowDays;
+            const currentAvgCalories = currentWindowNutrition.reduce((sum, row) => sum + parseFloat(row[1]), 0) / windowDays;
+            const currentAvgSteps = currentWindowNutrition.reduce((sum, row) => sum + parseFloat(row[6]), 0) / windowDays;
+
+            // Calculate averages for previous window
+            const previousAvgWeight = previousWindowBody.reduce((sum, row) => sum + parseFloat(row[1]), 0) / windowDays;
+
+            // Calculate weight loss (positive = loss, negative = gain)
+            const weightLoss = previousAvgWeight - currentAvgWeight;
+
+            // Calculate real maintenance
+            const weightLossCalories = (weightLoss * 7700) / windowDays; // Daily calorie deficit from weight loss
+            const stepsCalories = currentAvgSteps / 25; // Calories burned from steps
+            const realMaintenance = currentAvgCalories + weightLossCalories - stepsCalories;
+
+            return {
+                windowDays,
+                currentAvgWeight: currentAvgWeight.toFixed(2),
+                previousAvgWeight: previousAvgWeight.toFixed(2),
+                weightLoss: weightLoss.toFixed(2),
+                currentAvgCalories: currentAvgCalories.toFixed(0),
+                currentAvgSteps: currentAvgSteps.toFixed(0),
+                weightLossCalories: weightLossCalories.toFixed(0),
+                stepsCalories: stepsCalories.toFixed(0),
+                realMaintenance: realMaintenance.toFixed(0),
+                dateRange: `${currentWindowBody[windowDays-1][0]} - ${currentWindowBody[0][0]}`
+            };
+        }
+
+        function displayResults(results, selectedDate) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results').style.display = 'grid';
+            document.getElementById('summarySection').style.display = 'block';
+
+            // Display summary
+            displaySummary(results);
+
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+
+            results.forEach(result => {
+                const card = document.createElement('div');
+                card.className = 'window-card';
+                
+                card.innerHTML = `
+                    <h3>חלון ${result.windowDays} ימים</h3>
+                    <div class="metric-row">
+                        <span class="metric-label">תקופה:</span>
+                        <span class="metric-value">${result.dateRange}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">משקל ממוצע (נוכחי):</span>
+                        <span class="metric-value">${result.currentAvgWeight} ק"ג</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">משקל ממוצע (קודם):</span>
+                        <span class="metric-value">${result.previousAvgWeight} ק"ג</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">שינוי משקל:</span>
+                        <span class="metric-value ${result.weightLoss > 0 ? 'positive' : 'negative'}">
+                            ${result.weightLoss > 0 ? '+' : ''}${result.weightLoss} ק"ג
+                            ${result.weightLoss > 0 ? '(ירידה)' : '(עלייה)'}
+                        </span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">קלוריות ממוצעות:</span>
+                        <span class="metric-value">${result.currentAvgCalories}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">צעדים ממוצעים:</span>
+                        <span class="metric-value">${result.currentAvgSteps}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">קלוריות מירידת משקל:</span>
+                        <span class="metric-value ${result.weightLossCalories > 0 ? 'positive' : 'negative'}">
+                            ${result.weightLossCalories > 0 ? '+' : ''}${result.weightLossCalories}
+                            ${result.weightLossCalories > 0 ? '(הוספה)' : '(הפחתה)'}
+                        </span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">קלוריות מצעדים:</span>
+                        <span class="metric-value negative">-${result.stepsCalories}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">תחזוקה אמיתית:</span>
+                        <span class="metric-value" style="font-size: 18px; color: #2e7d32;">
+                            ${result.realMaintenance} קלוריות
+                        </span>
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        function displaySummary(results) {
+            const summaryGrid = document.getElementById('summaryGrid');
+            summaryGrid.innerHTML = '';
+
+            // Calculate average maintenance across all windows
+            const avgMaintenance = results.reduce((sum, result) => sum + parseFloat(result.realMaintenance), 0) / results.length;
+            
+            // Find min and max maintenance
+            const minMaintenance = Math.min(...results.map(r => parseFloat(r.realMaintenance)));
+            const maxMaintenance = Math.max(...results.map(r => parseFloat(r.realMaintenance)));
+
+            // Add summary cards
+            const avgCard = document.createElement('div');
+            avgCard.className = 'summary-card';
+            avgCard.innerHTML = `
+                <h4>ממוצע כל החלונות</h4>
+                <div class="summary-value">${avgMaintenance.toFixed(0)}</div>
+                <div class="summary-label">קלוריות ליום</div>
+            `;
+            summaryGrid.appendChild(avgCard);
+
+            const minCard = document.createElement('div');
+            minCard.className = 'summary-card';
+            minCard.innerHTML = `
+                <h4>התחזוקה הנמוכה ביותר</h4>
+                <div class="summary-value">${minMaintenance.toFixed(0)}</div>
+                <div class="summary-label">קלוריות ליום</div>
+            `;
+            summaryGrid.appendChild(minCard);
+
+            const maxCard = document.createElement('div');
+            maxCard.className = 'summary-card';
+            maxCard.innerHTML = `
+                <h4>התחזוקה הגבוהה ביותר</h4>
+                <div class="summary-value">${maxMaintenance.toFixed(0)}</div>
+                <div class="summary-label">קלוריות ליום</div>
+            `;
+            summaryGrid.appendChild(maxCard);
+
+            // Add range card
+            const rangeCard = document.createElement('div');
+            rangeCard.className = 'summary-card';
+            rangeCard.innerHTML = `
+                <h4>טווח התחזוקה</h4>
+                <div class="summary-value">${(maxMaintenance - minMaintenance).toFixed(0)}</div>
+                <div class="summary-label">קלוריות הבדל</div>
+            `;
+            summaryGrid.appendChild(rangeCard);
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+    </script>
+</body>
+</html>
